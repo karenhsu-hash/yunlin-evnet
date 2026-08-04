@@ -61,7 +61,7 @@ const towns = computed(() => [...new Set(stores.map((s) => s.town))])
       </div>
 
       <!-- ── 店家列表 ───────────────────────────── -->
-      <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div class="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StoreCard v-for="s in filtered" :key="s.id" :store="s" />
       </div>
 
@@ -69,33 +69,6 @@ const towns = computed(() => [...new Set(stores.map((s) => s.town))])
         此分類目前沒有店家。
       </p>
 
-      <!-- ── 使用說明 ───────────────────────────── -->
-      <div class="mt-10 card p-5 sm:p-6">
-        <h2 class="text-lg font-black sm:text-xl">折價券怎麼用</h2>
-        <ol class="mt-4 grid gap-3 sm:grid-cols-3">
-          <li
-            v-for="(t, i) in [
-              { icon: 'i-lucide-ticket', title: '出示折價券', desc: '結帳時打開券包，把券拿給店家看。' },
-              { icon: 'i-lucide-calculator', title: '當場折抵', desc: `消費滿 ${CAMPAIGN.minSpend} 元即可使用，差額不退還。` },
-              { icon: 'i-lucide-check-check', title: '完成', desc: '店家確認後即扣券，不需要任何設備。' }
-            ]"
-            :key="i"
-            class="flex gap-3 rounded-2xl bg-paper-soft p-4"
-          >
-            <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-white text-clay-600">
-              <UIcon :name="t.icon" class="size-5" />
-            </span>
-            <div class="min-w-0">
-              <p class="text-sm font-bold">{{ t.title }}</p>
-              <p class="mt-0.5 text-xs leading-relaxed text-ink-soft">{{ t.desc }}</p>
-            </div>
-          </li>
-        </ol>
-
-        <p class="mt-4 text-[11px] leading-relaxed text-ink-faint">
-          實際合作名單以主辦單位公告為準。
-        </p>
-      </div>
     </div>
   </div>
 </template>

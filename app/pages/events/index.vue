@@ -148,38 +148,41 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
       </div>
     </section>
 
-    <!-- ── 規則說明 ─────────────────────────────── -->
-    <section class="container-page pb-4">
-      <div class="card p-5 sm:p-6">
-        <h2 class="text-lg font-black sm:text-xl">玩法說明</h2>
-        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+    <!-- ── 玩法說明：條文式 ─────────────────────── -->
+    <section class="container-page pb-6">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="border-b-2 border-ink pb-2.5 text-xl font-black text-ink sm:text-2xl">玩法說明</h2>
+
+        <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
+          本活動以「紅配綠」為核心機制，將雲林各觀光亮點分為紅點與綠點兩類。
+          旅客於景點現場掃描專屬 QR code 完成到訪紀錄，並以「一紅一綠」為一組，
+          分三段依序解鎖折價券獎勵，最高可累積 {{ toComma(CAMPAIGN.quota) }} 元，
+          於全縣合作店家直接折抵。
+        </p>
+
+        <ol class="mt-6 space-y-4">
           <li
-            v-for="r in [
-              { icon: 'i-lucide-circle-dollar-sign', tone: 'vermilion', t: '紅點', d: `老街、商圈、觀光工廠。現場消費滿 ${CAMPAIGN.minSpend} 元再掃碼。` },
-              { icon: 'i-lucide-camera', tone: 'moss', t: '綠點', d: '步道、濕地、鐵橋。拍張照掃碼就完成。' },
-              { icon: 'i-lucide-layers', tone: 'marigold', t: '一組', d: `一紅一綠湊成一組，三段共 ${toComma(CAMPAIGN.quota)} 元。` },
-              { icon: 'i-lucide-clock', tone: 'sky', t: '時間', d: '同一天連跑三段也可以，完成當下就發券。' }
+            v-for="(t, i) in [
+              `紅點為可消費景點，共 ${RED_SPOTS.length} 處，包含老街、商圈與觀光工廠等。旅客須於現場消費滿 ${CAMPAIGN.minSpend} 元後掃碼，始認定完成。`,
+              `綠點為不可消費景點，共 ${GREEN_SPOTS.length} 處，包含步道、濕地與風景區等。以拍照打卡或直接掃碼即可完成。`,
+              '完成「一紅點 ＋ 一綠點」為一組。三段依序解鎖：第一段 250 元、第二段 250 元、第三段 500 元。',
+              '各階段之完成間隔不限，同一日內連續完成三段亦可；符合條件後由系統即時自動核發折價券。',
+              '同一會員於同一景點僅計算一次，重複掃碼不重複計入。'
             ]"
-            :key="r.t"
-            class="flex gap-3 rounded-2xl bg-paper-soft p-3.5"
+            :key="i"
+            class="flex gap-3.5"
           >
             <span
-              class="grid place-items-center size-9 shrink-0 rounded-xl bg-white"
-              :class="{
-                'text-vermilion-600': r.tone === 'vermilion',
-                'text-moss-600': r.tone === 'moss',
-                'text-marigold-700': r.tone === 'marigold',
-                'text-sky-600': r.tone === 'sky'
-              }"
-            >
-              <UIcon :name="r.icon" class="size-5" />
-            </span>
-            <div class="min-w-0">
-              <p class="text-sm font-bold">{{ r.t }}</p>
-              <p class="mt-0.5 text-xs leading-relaxed text-ink-soft">{{ r.d }}</p>
-            </div>
+              class="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-paper-deep text-[11px] font-black text-ink-soft"
+            >{{ i + 1 }}</span>
+            <p class="text-sm leading-relaxed text-ink sm:text-[15px]">{{ t }}</p>
           </li>
-        </ul>
+        </ol>
+
+        <p class="mt-6 border-t border-paper-deep pt-4 text-xs leading-relaxed text-ink-faint">
+          以上為摘要說明，完整條款請參閱
+          <NuxtLink to="/rules" class="font-bold text-sky-600 underline underline-offset-2">活動辦法</NuxtLink>。
+        </p>
       </div>
     </section>
   </div>

@@ -62,7 +62,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
     <!-- 未登入：打卡需對應到會員帳號 -->
     <div v-if="!isLoggedIn" class="container-narrow">
       <LoginGate
-        title="登入後才能掃碼打卡"
+        title="登入後才能打卡"
         desc="打卡會記錄在你的帳號下，請先登入再開始。"
         icon="i-lucide-qr-code"
       />
@@ -73,7 +73,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
     <header class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <span class="chip bg-vermilion-100 text-vermilion-700">景點打卡</span>
-        <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">掃碼打卡</h1>
+        <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">我要打卡</h1>
         <p class="mt-1.5 max-w-lg text-sm text-ink-soft">
           在景點現場掃一下 QR code，就完成到訪紀錄。
         </p>

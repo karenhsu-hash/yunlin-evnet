@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
-const { isLoggedIn, walletAmount, logout } = useCampaign()
+const { isLoggedIn, logout } = useCampaign()
 
 /** 網頁版主導覽：桌機橫向排開，行動裝置收進 UHeader 內建選單 */
 const links = [
@@ -8,22 +8,11 @@ const links = [
   { label: '活動景點', to: '/events', icon: 'i-lucide-map' },
   { label: '合作店家', to: '/stores', icon: 'i-lucide-store' },
   { label: '活動辦法', to: '/rules', icon: 'i-lucide-scroll-text' },
-  { label: '掃碼打卡', to: '/checkin', icon: 'i-lucide-qr-code' }
+  { label: '我要打卡', to: '/checkin', icon: 'i-lucide-qr-code' }
 ]
 
 const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
 
-/** 端點切換：核銷與後台是店家／主辦看的，不放進旅客導覽 */
-const roleItems = [
-  { label: '旅客端', icon: 'i-lucide-user-round', to: '/' },
-  { label: '店家核銷端', icon: 'i-lucide-store', to: '/redeem' },
-  { label: '管理後台', icon: 'i-lucide-layout-dashboard', to: '/admin' },
-  { label: '會員註冊流程', icon: 'i-lucide-clipboard-pen', to: '/register' }
-]
-
-const currentRole = computed(() =>
-  route.path.startsWith('/admin') ? '管理後台' : route.path.startsWith('/redeem') ? '店家核銷端' : '旅客端'
-)
 </script>
 
 <template>
@@ -62,29 +51,6 @@ const currentRole = computed(() =>
 
       <template #right>
         <div class="flex items-center gap-2">
-          <!-- 登入後才露出券包餘額 -->
-          <NuxtLink
-            v-if="isLoggedIn"
-            to="/member"
-            class="hidden sm:flex items-center gap-1.5 rounded-full bg-marigold-100 px-3 py-1.5 text-xs font-bold text-marigold-700"
-          >
-            <UIcon name="i-lucide-ticket" class="size-3.5" />
-            券包 ${{ walletAmount }}
-          </NuxtLink>
-
-          <UDropdownMenu :items="roleItems">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              trailing-icon="i-lucide-chevron-down"
-              class="rounded-full font-bold text-white ring-1 ring-white/40 hover:bg-white/10"
-            >
-              <span class="hidden sm:inline">{{ currentRole }}</span>
-              <UIcon name="i-lucide-repeat" class="sm:hidden size-4" />
-            </UButton>
-          </UDropdownMenu>
-
           <template v-if="isLoggedIn">
             <UButton
               to="/member"
@@ -156,18 +122,6 @@ const currentRole = computed(() =>
             </NuxtLink>
           </template>
 
-          <div class="my-3 h-px bg-paper-deep" />
-
-          <p class="px-3 pb-1 text-xs font-bold text-ink-faint">切換示範端點</p>
-          <NuxtLink
-            v-for="r in roleItems"
-            :key="r.to"
-            :to="r.to"
-            class="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-ink-soft"
-          >
-            <UIcon :name="r.icon" class="size-5" />
-            {{ r.label }}
-          </NuxtLink>
         </nav>
       </template>
     </UHeader>
