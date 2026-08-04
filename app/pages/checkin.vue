@@ -263,7 +263,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
             class="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-marigold-100 px-3.5 py-3 text-xs font-bold text-marigold-700"
           >
             <UIcon name="i-lucide-party-popper" class="size-4" />
-            三段任務全部完成，共領取 {{ CAMPAIGN.quota }} 元
+            三段任務全部完成，共領取 {{ toComma(CAMPAIGN.quota) }} 元
           </p>
         </div>
 

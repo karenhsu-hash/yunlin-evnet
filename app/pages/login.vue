@@ -53,9 +53,7 @@ function demoLogin() {
   <div class="container-narrow py-10 sm:py-16">
     <div class="mx-auto max-w-md">
       <header class="text-center">
-        <span class="grid place-items-center mx-auto size-14 rounded-2xl bg-vermilion-500 text-white">
-          <UIcon name="i-lucide-route" class="size-7" />
-        </span>
+        <img src="/images/logo.png" alt="雲林縣 捲動國旅" class="mx-auto h-16 w-auto">
         <h1 class="mt-4 text-2xl font-black sm:text-3xl">會員登入</h1>
         <p class="mt-2 text-sm text-ink-soft">
           登入後查看你的任務進度與折價券

@@ -180,7 +180,7 @@ function fillDemo() {
         <h2 class="flex items-center gap-2 text-lg font-black">
           <UIcon name="i-lucide-clipboard-pen" class="size-5 text-vermilion-500" />基本資料
         </h2>
-        <p class="mt-1 text-xs text-ink-soft">中獎的實體獎品會寄到這個地址</p>
+        <p class="mt-1 text-xs text-ink-soft">用於活動通知與聯繫</p>
 
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
@@ -241,13 +241,13 @@ function fillDemo() {
         <h2 class="flex items-center gap-2 text-lg font-black">
           <UIcon name="i-lucide-compass" class="size-5 text-vermilion-500" />選擇身分
         </h2>
-        <p class="mt-1 text-xs text-ink-soft">兩種身分的折價券條件相同，差別只在抽獎次數</p>
+        <p class="mt-1 text-xs text-ink-soft">兩種身分的折價券條件完全相同</p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
           <button
             v-for="opt in [
-              { key: 'visitor', icon: 'i-lucide-car-front', title: '外地旅客', desc: '設籍雲林縣以外', entries: ENTRY_RULE.visitor },
-              { key: 'local', icon: 'i-lucide-house', title: '雲林在地', desc: '設籍雲林縣內', entries: ENTRY_RULE.local }
+              { key: 'visitor', icon: 'i-lucide-car-front', title: '外地旅客', desc: '設籍雲林縣以外' },
+              { key: 'local', icon: 'i-lucide-house', title: '雲林在地', desc: '設籍雲林縣內' }
             ]"
             :key="opt.key"
             class="flex items-center gap-3 rounded-card border-2 p-4 text-left transition-colors"
@@ -261,7 +261,6 @@ function fillDemo() {
               <p class="font-bold">{{ opt.title }}</p>
               <p class="text-xs text-ink-soft">{{ opt.desc }}</p>
             </div>
-            <span class="chip shrink-0 bg-marigold-100 text-marigold-700">抽獎 ×{{ opt.entries }}</span>
           </button>
         </div>
 
@@ -271,7 +270,7 @@ function fillDemo() {
           variant="soft"
           icon="i-lucide-triangle-alert"
           title="所選身分與通訊地址判別不一致"
-          description="折價券條件不受影響；如填報不實，中獎資格得予取消。"
+          description="折價券條件不受影響；如填報不實，主辦單位得取消參加資格。"
           class="mt-4"
         />
 
@@ -316,7 +315,7 @@ function fillDemo() {
           </div>
 
           <ul class="mt-4 space-y-2 text-xs text-ink-soft">
-            <li v-for="t in ['任務完成、折價券到帳即時通知', '每週抽獎結果公告', '推播頻率低，不擾民']" :key="t" class="flex items-center gap-2">
+            <li v-for="t in ['任務完成、折價券到帳即時通知', '活動與店家最新消息', '推播頻率低，不擾民']" :key="t" class="flex items-center gap-2">
               <UIcon name="i-lucide-check" class="size-4 shrink-0 text-moss-600" />{{ t }}
             </li>
           </ul>
@@ -361,10 +360,6 @@ function fillDemo() {
             <dd class="font-bold" :class="member.lineBound ? 'text-moss-600' : 'text-ink-faint'">
               {{ member.lineBound ? '已綁定 ‧ +50 元折抵金' : '尚未綁定' }}
             </dd>
-          </div>
-          <div class="flex justify-between py-3 text-sm">
-            <dt class="text-ink-soft">每段抽獎次數</dt>
-            <dd class="font-bold">×{{ ENTRY_RULE[member.identity] }}</dd>
           </div>
         </dl>
       </div>

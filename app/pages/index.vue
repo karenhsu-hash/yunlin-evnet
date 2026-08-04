@@ -1,31 +1,9 @@
 <script setup lang="ts">
-const { isLoggedIn, member, completedStages, nextNeed, walletAmount, coupons, checkedIn } = useCampaign()
-const { stores } = useStores()
+const { isLoggedIn, checkedIn } = useCampaign()
 
 const nearbySpots = computed(() =>
   [...ALL_SPOTS].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 8)
 )
-
-/** 首頁只露出部分店家，其餘導往合作店家頁 */
-const featuredStores = computed(() => stores.slice(0, 6))
-
-const howItWorks = [
-  {
-    icon: 'i-lucide-qr-code',
-    title: '走到景點',
-    desc: '在現場掃一下 QR code，就完成到訪紀錄。'
-  },
-  {
-    icon: 'i-lucide-circle-dot',
-    title: '湊一紅一綠',
-    desc: '紅點吃喝買、綠點拍美照，兩個湊成一組。'
-  },
-  {
-    icon: 'i-lucide-ticket',
-    title: '折價券入袋',
-    desc: '完成當下立刻發券，直接進你的券包。'
-  }
-]
 
 /** 形象展示：本案的三個主張 */
 const brandPoints = [
@@ -40,176 +18,147 @@ const brandPoints = [
     desc: '券只能在雲林的店家使用。你吃的那碗麵、帶走的那罐醬油，都留在這片土地上。'
   },
   {
-    icon: 'i-lucide-users-round',
-    title: '玩得越深，拿得越多',
-    desc: '三段任務最高帶走 1,000 元，完成的段數越多，每週抽獎的次數也越多。'
+    icon: 'i-lucide-route',
+    title: '走得越深，拿得越多',
+    desc: '一紅一綠湊成一組，三段任務最高帶走 1,000 元折價券，在合作店家直接折抵。'
   }
 ]
 
+/** 怎麼玩：自動輪播的三個步驟 */
+const steps = [
+  {
+    key: 'scan',
+    icon: 'i-lucide-qr-code',
+    title: '走到景點',
+    desc: '在現場掃一下 QR code，就完成到訪紀錄。'
+  },
+  {
+    key: 'pair',
+    icon: 'i-lucide-circle-dot',
+    title: '湊一紅一綠',
+    desc: '紅點吃喝買、綠點拍美照，兩個湊成一組。'
+  },
+  {
+    key: 'coupon',
+    icon: 'i-lucide-ticket',
+    title: '折價券入袋',
+    desc: '完成當下立刻發券，直接進你的券包。'
+  }
+]
+
+const active = ref(0)
+const paused = ref(false)
+const reduceMotion = ref(false)
+const STEP_MS = 4200
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (reduceMotion.value) return
+  timer = setInterval(() => {
+    if (!paused.value) active.value = (active.value + 1) % steps.length
+  }, STEP_MS)
+})
+onUnmounted(() => timer && clearInterval(timer))
+
+function goStep(i: number) {
+  active.value = i
+}
+
+/** 主視覺的行動點：捲動到下方內容而非直接換頁 */
+function scrollToContent() {
+  document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 const faqItems = [
   { label: '折價券可以找零嗎？', content: '不找零。消費金額若低於券面額，差額不退還。' },
-  { label: '每人最多可以領多少？', content: `三段任務合計 ${CAMPAIGN.quota} 元，這是每人上限。` },
+  { label: '每人最多可以領多少？', content: `三段任務合計 ${toComma(CAMPAIGN.quota)} 元，這是每人上限。` },
   { label: '券的有效期多久？', content: `發券後 ${CAMPAIGN.couponValidDays} 天內，且不超過活動結束日 ${CAMPAIGN.endDate}。` },
   { label: '三段一定要分天完成嗎？', content: '不用，同一天也可以連續跑完三段。' },
-  {
-    label: '在地與外地的差別是什麼？',
-    content: `折價券的條件完全一樣，差別只在抽獎次數：外地旅客每段 ${ENTRY_RULE.visitor} 次、雲林在地每段 ${ENTRY_RULE.local} 次。`
-  }
+  { label: '哪裡可以使用折價券？', content: `全縣約 ${CAMPAIGN.storeCount} 家合作店家，小吃、伴手禮、餐廳、咖啡、體驗與住宿都有。` }
 ]
 </script>
 
 <template>
   <div>
-    <!-- ══ 形象展示：主視覺 ═══════════════════════ -->
-    <section class="relative isolate overflow-hidden">
-      <img
-        src="/images/kv-main.jpg"
-        alt="雲林縣 台灣觀光100亮點 捲動國旅 主視覺"
-        class="absolute inset-0 -z-10 size-full object-cover"
-      >
-      <div class="absolute inset-0 -z-10 bg-gradient-to-t from-paper via-paper/70 to-paper/10 md:bg-gradient-to-r md:from-paper md:via-paper/80 md:to-transparent" />
+    <!-- ══ 主視覺：全寬滿版一屏 ═══════════════════ -->
+    <section class="relative w-full bg-paper kv-section">
+      <div class="relative size-full">
+        <img
+          src="/images/kv-main.jpg"
+          alt="雲林縣 台灣觀光100亮點 捲動國旅 主視覺"
+          class="kv-hero"
+        >
 
-      <div class="container-page py-14 sm:py-20 lg:py-28">
-        <div class="max-w-xl">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="chip bg-white/90 text-ink shadow-card">
-              <UIcon name="i-lucide-calendar-days" class="size-3.5" />
-              {{ CAMPAIGN.startDate }} – {{ CAMPAIGN.endDate }}
-            </span>
-            <span class="chip bg-indigoink-500 text-white shadow-card">
-              與 {{ CAMPAIGN.partner }} 一起出發
-            </span>
-          </div>
-
-          <p class="mt-5 text-sm font-bold tracking-[0.3em] text-indigoink-600 sm:text-base">
-            {{ CAMPAIGN.subtitle }}
-          </p>
-          <h1 class="mt-1 text-4xl font-black leading-tight text-ink sm:text-5xl lg:text-6xl">
-            {{ CAMPAIGN.county }}<br class="sm:hidden">{{ CAMPAIGN.title }}
-          </h1>
-          <p class="mt-4 max-w-md text-sm leading-relaxed text-ink-soft sm:text-base">
-            走訪雲林紅綠景點，完成「一紅一綠」三段任務，
-            最高帶走 <b class="text-vermilion-600">{{ CAMPAIGN.quota }} 元</b>折價券，
-            在合作店家直接折抵。
-          </p>
-
-          <div class="mt-7 flex flex-wrap gap-3">
-            <UButton
-              :to="isLoggedIn ? '/checkin' : '/register'"
-              size="xl"
-              color="primary"
-              :icon="isLoggedIn ? 'i-lucide-qr-code' : 'i-lucide-user-plus'"
-              class="rounded-full font-bold"
-            >{{ isLoggedIn ? '開始掃碼打卡' : '免費註冊參加' }}</UButton>
-            <UButton
-              to="/events"
-              size="xl"
-              color="neutral"
-              variant="outline"
-              icon="i-lucide-map"
-              class="rounded-full bg-white/80 font-bold"
-            >瀏覽 20 個亮點</UButton>
-          </div>
-
-          <dl class="mt-8 flex flex-wrap gap-x-8 gap-y-3">
-            <div v-for="s in [
-              { k: '紅點景點', v: `${RED_SPOTS.length} 處` },
-              { k: '綠點景點', v: `${GREEN_SPOTS.length} 處` },
-              { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` }
-            ]" :key="s.k">
-              <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
-              <dd class="text-xl font-black text-ink">{{ s.v }}</dd>
-            </div>
-          </dl>
+        <!--
+          桌機：行動點置於主視覺「下半部的正中間」——
+          以下半部（h-1/2、貼齊底部）為容器再置中，約落在整體高度 75% 處，
+          既不壓到上方的手寫標題，也不會貼到底邊。
+          手機主視覺較矮，按鈕改放下方標題區。
+        -->
+        <div class="absolute inset-x-0 bottom-0 hidden h-1/2 items-center justify-center gap-3 lg:flex">
+          <UButton
+            size="xl"
+            color="primary"
+            :icon="isLoggedIn ? 'i-lucide-qr-code' : 'i-lucide-user-plus'"
+            class="rounded-full font-bold shadow-pop"
+            @click="scrollToContent"
+          >{{ isLoggedIn ? '馬上打卡' : '馬上參加' }}</UButton>
+          <UButton
+            size="xl"
+            color="neutral"
+            variant="solid"
+            icon="i-lucide-scroll-text"
+            class="rounded-full bg-white font-bold text-ink shadow-pop hover:bg-white"
+            @click="scrollToContent"
+          >了解活動辦法</UButton>
         </div>
       </div>
     </section>
 
-    <!-- ══ 個人專區：登入後才顯示 ═════════════════ -->
-    <!--
-      這一段用負邊距疊在主視覺上。主視覺是 position:relative（定位元素），
-      依 CSS 繪製順序會蓋過後面的 static 區塊，所以這裡也要定位並給 z-index，
-      否則卡片頂端會被主視覺遮住且無法點擊。
-    -->
-    <section class="container-page relative z-10 -mt-4 pb-4 sm:-mt-8">
-      <div v-if="isLoggedIn" class="grid gap-4 lg:grid-cols-3">
-        <div class="card p-4 sm:p-6 lg:col-span-2">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="text-lg font-black sm:text-xl">我的三段任務</h2>
-            <span class="text-xs text-ink-soft sm:text-sm">
-              已完成 <b class="text-vermilion-500">{{ completedStages }}</b> / 3 段
-            </span>
-          </div>
-
-          <div class="mt-4">
-            <StageProgress :completed="completedStages" />
-          </div>
-
-          <div v-if="nextNeed" class="mt-4 flex items-center gap-3 rounded-2xl bg-paper-soft p-3 sm:p-4">
-            <span class="grid place-items-center size-9 shrink-0 rounded-full bg-white text-vermilion-500">
-              <UIcon name="i-lucide-target" class="size-5" />
-            </span>
-            <p class="flex-1 text-xs leading-snug text-ink-soft sm:text-sm">
-              再打
-              <b v-if="nextNeed.needRed" class="text-vermilion-600">{{ nextNeed.needRed }} 個紅點</b>
-              <template v-if="nextNeed.needRed && nextNeed.needGreen"> ＋ </template>
-              <b v-if="nextNeed.needGreen" class="text-moss-600">{{ nextNeed.needGreen }} 個綠點</b>
-              ，就能拿到 <b class="text-marigold-700">{{ nextNeed.reward }} 元</b>折價券
-            </p>
-            <UButton to="/checkin" color="primary" size="sm" class="shrink-0 rounded-full font-bold">
-              去打卡
-            </UButton>
-          </div>
-
-          <div v-else class="mt-4 flex items-center gap-2 rounded-2xl bg-marigold-100 p-4">
-            <UIcon name="i-lucide-party-popper" class="size-5 shrink-0 text-marigold-700" />
-            <p class="text-sm font-bold text-marigold-700">
-              三段任務全數完成，已領滿 {{ CAMPAIGN.quota }} 元
-            </p>
-          </div>
-        </div>
-
-        <div class="card flex flex-col p-4 sm:p-6">
-          <div class="flex items-center gap-3">
-            <span class="grid place-items-center size-11 rounded-full bg-sky-100 text-sky-700">
-              <UIcon :name="member.avatar" class="size-6" />
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="font-bold leading-tight truncate">{{ member.name }}</p>
-              <div class="mt-1 flex flex-wrap items-center gap-1.5">
-                <span class="chip bg-sky-100 text-sky-700">
-                  {{ member.identity === 'visitor' ? '外地旅客' : '雲林在地' }}
-                </span>
-                <span v-if="member.lineBound" class="chip bg-moss-100 text-moss-700">
-                  <UIcon name="i-lucide-message-circle" class="size-3" />已綁定
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-4 rounded-2xl bg-paper-soft p-4 text-center">
-            <p class="text-xs font-bold text-ink-soft">券包餘額</p>
-            <p class="mt-1 text-4xl font-black leading-none text-vermilion-500">
-              <span class="text-lg align-top">$</span>{{ walletAmount }}
-            </p>
-            <p class="mt-1.5 text-[11px] text-ink-faint">
-              共 {{ coupons.length }} 張 ‧ 上限 {{ CAMPAIGN.quota }} 元
-            </p>
-          </div>
-
-          <UButton
-            to="/member"
-            color="neutral"
-            variant="outline"
-            block
-            class="mt-4 rounded-full font-bold"
-            trailing-icon="i-lucide-chevron-right"
-          >會員中心</UButton>
-        </div>
+    <!-- ══ 標題區塊：置中 ═══════════════════════ -->
+    <section class="container-page py-10 text-center sm:py-14">
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <span class="chip bg-paper-soft text-ink-soft">
+          <UIcon name="i-lucide-calendar-days" class="size-3.5" />
+          {{ CAMPAIGN.startDate }} – {{ CAMPAIGN.endDate }}
+        </span>
+        <span class="chip bg-indigoink-500 text-white">與 {{ CAMPAIGN.partner }} 一起出發</span>
       </div>
 
-      <!-- 未登入：以號召取代個人資料 -->
-      <div v-else class="card overflow-hidden">
+      <h1 class="mt-4 text-3xl font-black leading-tight text-ink sm:text-4xl lg:text-5xl">
+        {{ CAMPAIGN.county }}{{ CAMPAIGN.title }}
+      </h1>
+
+      <p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base">
+        走訪雲林紅綠景點，完成「一紅一綠」三段任務，
+        最高帶走 <b class="text-vermilion-600">{{ toComma(CAMPAIGN.quota) }} 元</b>折價券，
+        在合作店家直接折抵。
+      </p>
+
+      <!-- 手機版行動點 -->
+      <div class="mt-7 flex flex-wrap justify-center gap-3 lg:hidden">
+        <UButton
+          size="xl"
+          color="primary"
+          :icon="isLoggedIn ? 'i-lucide-qr-code' : 'i-lucide-user-plus'"
+          class="rounded-full font-bold"
+          @click="scrollToContent"
+        >{{ isLoggedIn ? '馬上打卡' : '馬上參加' }}</UButton>
+        <UButton
+          size="xl"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-scroll-text"
+          class="rounded-full font-bold"
+          @click="scrollToContent"
+        >了解活動辦法</UButton>
+      </div>
+    </section>
+
+    <!-- ══ 加入會員 CTA：不隨登入狀態切換內容 ═══ -->
+    <section id="intro" class="container-page scroll-mt-20 pt-6 sm:pt-8">
+      <div class="card overflow-hidden">
         <div class="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10">
           <div>
             <span class="chip bg-vermilion-100 text-vermilion-700">
@@ -245,10 +194,23 @@ const faqItems = [
       </div>
     </section>
 
-    <!-- ══ 形象展示：三個主張 ═════════════════════ -->
+
+    <!-- ══ 關於這場活動 ═══════════════════════════ -->
     <section class="container-page pt-12 sm:pt-16">
       <SectionHead title="關於這場活動" sub="為什麼要走一趟雲林" />
-      <div class="mt-5 grid gap-4 md:grid-cols-3">
+
+      <dl class="mt-5 grid grid-cols-3 divide-x divide-paper-deep rounded-card bg-white py-5 shadow-card">
+        <div v-for="s in [
+          { k: '紅點景點', v: `${RED_SPOTS.length} 處` },
+          { k: '綠點景點', v: `${GREEN_SPOTS.length} 處` },
+          { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` }
+        ]" :key="s.k" class="px-3 text-center">
+          <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
+          <dd class="mt-1 text-2xl font-black text-ink sm:text-3xl">{{ s.v }}</dd>
+        </div>
+      </dl>
+
+      <div class="mt-4 grid gap-4 md:grid-cols-3">
         <article v-for="b in brandPoints" :key="b.title" class="card p-5 sm:p-6">
           <span class="grid place-items-center size-12 rounded-2xl bg-indigoink-50 text-indigoink-600">
             <UIcon :name="b.icon" class="size-6" />
@@ -259,46 +221,47 @@ const faqItems = [
       </div>
     </section>
 
-    <!-- ══ 怎麼玩 ═══════════════════════════════ -->
+    <!-- ══ 怎麼玩：一到三，由左至右 ═══════════════ -->
     <section class="container-page pt-12 sm:pt-16">
-      <SectionHead title="怎麼玩" sub="三個步驟，最高帶走 1,000 元" />
-      <ol class="mt-5 grid gap-4 md:grid-cols-3">
-        <li v-for="(step, i) in howItWorks" :key="step.title" class="card p-5 sm:p-6">
-          <div class="flex items-center gap-3">
-            <span class="grid place-items-center size-11 rounded-2xl bg-sky-100 text-sky-700">
-              <UIcon :name="step.icon" class="size-6" />
-            </span>
-            <span class="text-3xl font-black text-paper-deep">0{{ i + 1 }}</span>
+      <SectionHead title="怎麼玩" :sub="`三個步驟，最高帶走 ${toComma(CAMPAIGN.quota)} 元`" />
+
+      <div
+        class="relative mt-8"
+        @mouseenter="paused = true"
+        @mouseleave="paused = false"
+      >
+        <!-- 由左至右推進的連接線（桌機） -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-10 hidden px-[16.6%] md:block">
+          <div class="h-1 rounded-full bg-paper-deep">
+            <div
+              class="h-full rounded-full bg-vermilion-500 transition-[width] duration-700 ease-out"
+              :style="{ width: `${(active / (steps.length - 1)) * 100}%` }"
+            />
           </div>
-          <h3 class="mt-3 text-lg font-black">{{ step.title }}</h3>
-          <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">{{ step.desc }}</p>
-        </li>
-      </ol>
-    </section>
+        </div>
 
-    <!-- ══ 合作店家 ═════════════════════════════ -->
-    <section class="container-page pt-12 sm:pt-16">
-      <SectionHead
-        title="合作店家"
-        :sub="`全縣約 ${CAMPAIGN.storeCount} 家，折價券在這裡直接折抵`"
-        to="/stores"
-        more="看全部店家"
-      />
+        <ol class="relative grid gap-8 md:grid-cols-3 md:gap-6">
+          <li v-for="(s, i) in steps" :key="s.key">
+            <button class="flex w-full flex-col items-center text-center" @click="goStep(i)">
+              <span
+                class="relative grid size-20 place-items-center rounded-full border-4 bg-white transition-colors duration-500"
+                :class="active >= i ? 'border-vermilion-500 text-vermilion-600' : 'border-paper-deep text-ink-faint'"
+              >
+                <UIcon :name="s.icon" class="size-9" />
+                <span
+                  class="absolute -bottom-2 grid size-6 place-items-center rounded-full text-[11px] font-black transition-colors duration-500"
+                  :class="active >= i ? 'bg-vermilion-500 text-white' : 'bg-paper-deep text-ink-faint'"
+                >{{ i + 1 }}</span>
+              </span>
 
-      <!-- 分類一覽 -->
-      <div class="mt-5 flex flex-wrap gap-2">
-        <NuxtLink
-          v-for="c in STORE_CATEGORIES"
-          :key="c.key"
-          :to="`/stores?c=${c.key}`"
-          class="flex items-center gap-1.5 rounded-full border-2 border-paper-deep bg-white px-3.5 py-2 text-xs font-bold text-ink-soft transition-colors hover:border-ink-faint"
-        >
-          <UIcon :name="c.icon" class="size-4" />{{ c.label }}
-        </NuxtLink>
-      </div>
-
-      <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StoreCard v-for="s in featuredStores" :key="s.id" :store="s" />
+              <span
+                class="mt-5 text-lg font-black transition-colors duration-500"
+                :class="active === i ? 'text-ink' : 'text-ink-soft'"
+              >{{ s.title }}</span>
+              <span class="mt-1.5 max-w-xs text-sm leading-relaxed text-ink-soft">{{ s.desc }}</span>
+            </button>
+          </li>
+        </ol>
       </div>
     </section>
 
@@ -357,47 +320,26 @@ const faqItems = [
       </div>
     </section>
 
-    <!-- ══ 加碼抽獎 ═════════════════════════════ -->
+    <!-- ══ 帶著券去吃喝（導往合作店家）═══════════ -->
     <section class="container-page pt-12 sm:pt-16">
-      <div class="grid gap-4 lg:grid-cols-3">
-        <NuxtLink
-          to="/lottery"
-          class="relative isolate overflow-hidden rounded-card bg-indigoink-500 p-6 text-white shadow-pop transition-transform hover:-translate-y-0.5 lg:col-span-2 sm:p-8"
-        >
-          <div class="absolute -right-10 -top-10 -z-10 size-44 rounded-full bg-white/10" />
-          <UIcon
-            name="i-lucide-gift"
-            class="absolute right-6 top-1/2 -z-10 size-28 -translate-y-1/2 text-white/20 sm:size-36"
-          />
-
-          <span class="chip bg-marigold-500 text-ink">週週抽</span>
-          <h3 class="mt-3 text-2xl font-black sm:text-3xl">加碼抽獎</h3>
-          <p class="mt-2 max-w-md text-sm leading-relaxed text-white/85">
-            活動期間週週開獎，3C 家電、實體禮券等你抽。完成的段數越多，抽獎次數越多。
-          </p>
-          <div class="mt-4 flex flex-wrap items-center gap-2">
-            <span class="chip bg-white/15 text-white">外地旅客 ×{{ ENTRY_RULE.visitor }} 次</span>
-            <span class="chip bg-white/15 text-white">在地鄉親 ×{{ ENTRY_RULE.local }} 次</span>
-          </div>
-        </NuxtLink>
-
-        <div class="card flex flex-col justify-center p-6 sm:p-8">
-          <span class="grid place-items-center size-12 rounded-2xl bg-clay-100 text-clay-600">
-            <UIcon name="i-lucide-store" class="size-6" />
-          </span>
-          <h3 class="mt-3 text-xl font-black">帶著券去吃喝</h3>
+      <NuxtLink
+        to="/stores"
+        class="card group flex flex-col items-start gap-4 p-6 transition-shadow hover:shadow-pop sm:flex-row sm:items-center sm:p-8"
+      >
+        <span class="grid place-items-center size-14 shrink-0 rounded-2xl bg-clay-100 text-clay-600">
+          <UIcon name="i-lucide-store" class="size-7" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <h2 class="text-xl font-black">帶著券去吃喝</h2>
           <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">
-            結帳時出示折價券，當場折抵。小吃、伴手禮、咖啡、住宿都能用。
+            全縣約 {{ CAMPAIGN.storeCount }} 家合作店家 —— 小吃、伴手禮、餐廳、咖啡、體驗與住宿，結帳時出示折價券當場折抵。
           </p>
-          <UButton
-            to="/stores"
-            color="neutral"
-            variant="outline"
-            class="mt-4 self-start rounded-full font-bold"
-            trailing-icon="i-lucide-chevron-right"
-          >看合作店家</UButton>
         </div>
-      </div>
+        <span class="flex shrink-0 items-center gap-1 text-sm font-bold text-sky-600">
+          看合作店家
+          <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </NuxtLink>
     </section>
 
     <!-- ══ 常見問題 ═════════════════════════════ -->
@@ -409,3 +351,31 @@ const faqItems = [
     </section>
   </div>
 </template>
+
+<style scoped>
+/**
+ * 主視覺全寬滿版：高度為一整屏（扣掉 4rem 頁首，剛好填滿可視範圍）。
+ * 滿版必然要裁切，故用 object-cover 由中心裁切；
+ * 手機螢幕較窄，改用較保守的高度避免插畫被裁得只剩天空。
+ */
+.kv-section {
+  height: 62svh;
+  min-height: 380px;
+}
+
+@media (min-width: 1024px) {
+  .kv-section {
+    height: calc(100svh - 4rem);
+  }
+}
+
+.kv-hero {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 靠上對齊：滿版裁切時優先保留上方的標題與天空，不切到字 */
+  object-position: center top;
+}
+
+</style>

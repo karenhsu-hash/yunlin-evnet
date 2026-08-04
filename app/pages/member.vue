@@ -1,16 +1,14 @@
 <script setup lang="ts">
 const { isLoggedIn, member, coupons, completedStages, walletAmount, earnedAmount, checkedRed, checkedGreen, resetDemo } = useCampaign()
-const { redeemRecords, lotteryRecords } = useMember()
-const { myEntries, perStage } = useLottery()
+const { redeemRecords } = useMember()
 
-type Tab = 'task' | 'coupon' | 'redeem' | 'lottery'
+type Tab = 'task' | 'coupon' | 'redeem'
 const tab = ref<Tab>('task')
 
 const tabs: { key: Tab; label: string; icon: string }[] = [
   { key: 'task', label: '任務進度', icon: 'i-lucide-target' },
   { key: 'coupon', label: '我的折價券', icon: 'i-lucide-ticket' },
-  { key: 'redeem', label: '核銷紀錄', icon: 'i-lucide-receipt-text' },
-  { key: 'lottery', label: '抽獎紀錄', icon: 'i-lucide-dices' }
+  { key: 'redeem', label: '核銷紀錄', icon: 'i-lucide-receipt-text' }
 ]
 
 const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.couponValue, 0))
@@ -51,7 +49,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
             </div>
           </div>
 
-          <dl class="grid grid-cols-3 gap-2.5 sm:gap-4 lg:w-[420px]">
+          <dl class="grid grid-cols-2 gap-2.5 sm:gap-4 lg:w-[300px]">
             <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
               <dt class="text-[10px] text-white/70">已完成</dt>
               <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
@@ -62,12 +60,6 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
               <dt class="text-[10px] text-white/70">券包餘額</dt>
               <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
                 <span class="text-[10px] align-top">$</span>{{ walletAmount }}
-              </dd>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
-              <dt class="text-[10px] text-white/70">抽獎次數</dt>
-              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
-                {{ myEntries }}<span class="text-[10px] font-bold"> 次</span>
               </dd>
             </div>
           </dl>
@@ -179,7 +171,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
           </div>
 
           <!-- 核銷紀錄 -->
-          <div v-else-if="tab === 'redeem'">
+          <div v-else>
             <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-card">
               <span class="text-sm text-ink-soft">已使用 {{ redeemRecords.length }} 張</span>
               <span class="text-xl font-black text-clay-600">－${{ usedTotal }}</span>
@@ -204,46 +196,6 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
                 <p class="mt-2 text-sm text-ink-soft">尚無核銷紀錄</p>
               </div>
             </div>
-          </div>
-
-          <!-- 抽獎紀錄 -->
-          <div v-else>
-            <div class="rounded-2xl bg-marigold-50 px-4 py-3">
-              <p class="text-xs leading-relaxed text-marigold-700">
-                每完成一段任務取得抽獎資格，{{ member.identity === 'visitor' ? '外地旅客' : '雲林在地' }}
-                每段 ×{{ perStage }} 次；目前共 <b>{{ myEntries }}</b> 次。
-              </p>
-            </div>
-
-            <div class="mt-4 card divide-y divide-paper-deep overflow-hidden">
-              <div v-for="r in lotteryRecords" :key="r.id" class="flex items-center gap-3 p-4">
-                <span
-                  class="grid place-items-center size-11 shrink-0 rounded-2xl"
-                  :class="r.result === 'won' ? 'bg-marigold-100 text-marigold-700' : 'bg-paper-soft text-ink-faint'"
-                >
-                  <UIcon
-                    :name="r.result === 'won' ? 'i-lucide-trophy' : r.result === 'pending' ? 'i-lucide-hourglass' : 'i-lucide-dices'"
-                    class="size-5"
-                  />
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="font-bold">{{ r.week }}</p>
-                  <p class="text-[11px] text-ink-faint">投入 {{ r.entries }} 次抽獎資格</p>
-                </div>
-                <span
-                  class="chip shrink-0"
-                  :class="{
-                    'bg-marigold-500 text-ink': r.result === 'won',
-                    'bg-paper-deep text-ink-faint': r.result === 'lost',
-                    'bg-sky-100 text-sky-700': r.result === 'pending'
-                  }"
-                >{{ r.result === 'won' ? `中獎 ‧ ${r.prize}` : r.result === 'pending' ? '未開獎' : '未中獎' }}</span>
-              </div>
-            </div>
-
-            <UButton to="/lottery" color="neutral" variant="outline" class="mt-4 rounded-full font-bold" trailing-icon="i-lucide-chevron-right">
-              看本週獎項
-            </UButton>
           </div>
 
           <button class="mt-8 w-full text-center text-[11px] text-ink-faint underline lg:hidden" @click="resetDemo">

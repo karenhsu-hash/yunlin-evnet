@@ -18,7 +18,7 @@ const towns = computed(() => [...new Set(stores.map((s) => s.town))])
 <template>
   <div>
     <!-- ── 頁首 ─────────────────────────────────── -->
-    <section class="relative isolate overflow-hidden border-b border-paper-deep">
+    <section class="relative isolate flex items-center overflow-hidden border-b border-paper-deep min-h-[280px] sm:min-h-[340px] lg:min-h-[400px]">
       <img
         src="/images/kv-banner.jpg"
         alt="捲動國旅 活動橫幅"
@@ -26,7 +26,7 @@ const towns = computed(() => [...new Set(stores.map((s) => s.town))])
       >
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/85 to-paper/30" />
 
-      <div class="container-page py-10 sm:py-14">
+      <div class="container-page py-10">
         <span class="chip bg-clay-500 text-white">
           <UIcon name="i-lucide-store" class="size-3.5" />折價券適用
         </span>

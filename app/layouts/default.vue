@@ -7,8 +7,8 @@ const links = [
   { label: '首頁', to: '/', icon: 'i-lucide-house' },
   { label: '活動景點', to: '/events', icon: 'i-lucide-map' },
   { label: '合作店家', to: '/stores', icon: 'i-lucide-store' },
-  { label: '掃碼打卡', to: '/checkin', icon: 'i-lucide-qr-code' },
-  { label: '加碼抽獎', to: '/lottery', icon: 'i-lucide-gift' }
+  { label: '活動辦法', to: '/rules', icon: 'i-lucide-scroll-text' },
+  { label: '掃碼打卡', to: '/checkin', icon: 'i-lucide-qr-code' }
 ]
 
 const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
@@ -30,22 +30,20 @@ const currentRole = computed(() =>
   <div class="min-h-screen flex flex-col bg-paper-soft">
     <UHeader
       mode="slideover"
-      :ui="{ root: 'bg-paper/85 backdrop-blur border-b border-paper-deep', container: 'container-page' }"
+      :ui="{ root: 'bg-sky-700/95 backdrop-blur border-b border-sky-800', container: 'container-page' }"
+      :toggle="{ class: 'text-white hover:bg-white/10' }"
     >
       <!--
         UHeader 已經把 title 插槽包成連結，這裡不能再放 NuxtLink，
         否則會產生巢狀 <a>（不合法 HTML），瀏覽器解析時會搬移節點而造成 hydration mismatch。
       -->
       <template #title>
-        <span class="flex items-center gap-2.5">
-          <span class="grid place-items-center size-9 rounded-xl bg-vermilion-500 text-white">
-            <UIcon name="i-lucide-route" class="size-5" />
-          </span>
-          <span class="leading-tight">
-            <span class="block text-[10px] font-bold tracking-widest text-ink-faint">雲林縣</span>
-            <span class="block text-base font-black text-ink">捲動國旅</span>
-          </span>
-        </span>
+        <!-- 標準字已含「雲林縣／捲動國旅」，不再另外排文字 -->
+        <img
+          src="/images/logo.png"
+          alt="雲林縣 捲動國旅"
+          class="h-10 w-auto sm:h-12"
+        >
       </template>
 
       <!-- 桌機導覽 -->
@@ -55,7 +53,7 @@ const currentRole = computed(() =>
           :key="l.to"
           :to="l.to"
           class="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold transition-colors"
-          :class="isActive(l.to) ? 'bg-vermilion-50 text-vermilion-600' : 'text-ink-soft hover:bg-paper-deep/60'"
+          :class="isActive(l.to) ? 'bg-white text-sky-700' : 'text-white/75 hover:bg-white/10 hover:text-white'"
         >
           <UIcon :name="l.icon" class="size-4" />
           {{ l.label }}
@@ -77,10 +75,10 @@ const currentRole = computed(() =>
           <UDropdownMenu :items="roleItems">
             <UButton
               color="neutral"
-              variant="outline"
+              variant="ghost"
               size="sm"
               trailing-icon="i-lucide-chevron-down"
-              class="rounded-full font-bold"
+              class="rounded-full font-bold text-white ring-1 ring-white/40 hover:bg-white/10"
             >
               <span class="hidden sm:inline">{{ currentRole }}</span>
               <UIcon name="i-lucide-repeat" class="sm:hidden size-4" />
@@ -94,14 +92,14 @@ const currentRole = computed(() =>
               variant="ghost"
               size="sm"
               icon="i-lucide-circle-user-round"
-              class="hidden md:inline-flex rounded-full font-bold"
+              class="hidden md:inline-flex rounded-full font-bold text-white hover:bg-white/10"
             >會員中心</UButton>
             <UButton
               color="neutral"
               variant="ghost"
               size="sm"
               icon="i-lucide-log-out"
-              class="hidden lg:inline-flex rounded-full font-bold text-ink-faint"
+              class="hidden lg:inline-flex rounded-full font-bold text-white/70 hover:bg-white/10 hover:text-white"
               aria-label="登出"
               @click="logout"
             />
@@ -112,7 +110,7 @@ const currentRole = computed(() =>
               color="neutral"
               variant="ghost"
               size="sm"
-              class="hidden md:inline-flex rounded-full font-bold"
+              class="hidden md:inline-flex rounded-full font-bold text-white hover:bg-white/10"
             >登入</UButton>
             <UButton
               to="/register"

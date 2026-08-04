@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { completedStages, isCheckedIn, checkedIn } = useCampaign()
+const { isCheckedIn } = useCampaign()
 
 type Filter = 'all' | 'red' | 'green' | 'todo'
 const filter = ref<Filter>('all')
@@ -27,7 +27,7 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
 <template>
   <div>
     <!-- ── 頁首 ─────────────────────────────────── -->
-    <section class="relative isolate overflow-hidden border-b border-paper-deep">
+    <section class="relative isolate flex items-center overflow-hidden border-b border-paper-deep min-h-[280px] sm:min-h-[340px] lg:min-h-[400px]">
       <img
         src="/images/kv-banner.jpg"
         alt="捲動國旅 活動橫幅"
@@ -35,7 +35,7 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
       >
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/85 to-paper/30" />
 
-      <div class="container-page py-10 sm:py-14">
+      <div class="container-page py-10">
         <span class="chip bg-vermilion-500 text-white">紅配綠 ‧ 三段任務</span>
         <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">活動景點</h1>
         <p class="mt-2 max-w-lg text-sm text-ink-soft sm:text-base">
@@ -44,26 +44,13 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
       </div>
     </section>
 
-    <!-- ── 進度摘要 ─────────────────────────────── -->
-    <div class="sticky top-16 z-30 border-b border-paper-deep bg-paper/95 backdrop-blur">
-      <div class="container-page py-3">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div class="flex-1">
-            <StageProgress :completed="completedStages" compact />
-          </div>
-          <div class="flex items-center text-[11px] text-ink-soft lg:shrink-0 lg:text-xs">
-            <span>已走過 {{ checkedIn.length }} / {{ ALL_SPOTS.length }} 個亮點</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ── 地圖 + 清單 ──────────────────────────── -->
     <section class="container-page py-6 sm:py-8">
       <div class="grid gap-6 lg:grid-cols-5 lg:gap-8">
         <!-- 地圖 -->
         <div class="lg:col-span-3">
-          <div class="lg:sticky lg:top-40">
+          <div class="lg:sticky lg:top-24">
             <h2 class="mb-3 text-lg font-black sm:text-xl">景點分布</h2>
             <div
               class="relative aspect-4/5 w-full overflow-hidden rounded-card border-2 border-paper-deep
@@ -170,7 +157,7 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
             v-for="r in [
               { icon: 'i-lucide-circle-dollar-sign', tone: 'vermilion', t: '紅點', d: `老街、商圈、觀光工廠。現場消費滿 ${CAMPAIGN.minSpend} 元再掃碼。` },
               { icon: 'i-lucide-camera', tone: 'moss', t: '綠點', d: '步道、濕地、鐵橋。拍張照掃碼就完成。' },
-              { icon: 'i-lucide-layers', tone: 'marigold', t: '一組', d: `一紅一綠湊成一組，三段共 ${CAMPAIGN.quota} 元。` },
+              { icon: 'i-lucide-layers', tone: 'marigold', t: '一組', d: `一紅一綠湊成一組，三段共 ${toComma(CAMPAIGN.quota)} 元。` },
               { icon: 'i-lucide-clock', tone: 'sky', t: '時間', d: '同一天連跑三段也可以，完成當下就發券。' }
             ]"
             :key="r.t"
