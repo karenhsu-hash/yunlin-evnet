@@ -1,0 +1,227 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@source "../../app.config.ts";
+
+/**
+ * 主題設定（Tailwind v4 以 CSS 定義，取代舊的 tailwind.config.js）
+ * 色票取自活動主視覺「台灣觀光100亮點 ‧ 捲動國旅」。
+ * Nuxt UI 的 primary 需要完整 50–950 色階，故各色都補齊。
+ */
+@theme {
+  /* 紙感底色 */
+  --color-paper: #fdf9f0;
+  --color-paper-soft: #f6efe1;
+  --color-paper-deep: #ede3d0;
+
+  /* 文字墨色 */
+  --color-ink: #3d3a35;
+  --color-ink-soft: #6b655c;
+  --color-ink-faint: #9a9288;
+
+  /* 磚紅：主色 / 紅點 */
+  --color-vermilion-50: #fdf4f2;
+  --color-vermilion-100: #fae3de;
+  --color-vermilion-200: #f5c7be;
+  --color-vermilion-300: #ee9887;
+  --color-vermilion-400: #e4705a;
+  --color-vermilion-500: #d9503f;
+  --color-vermilion-600: #b93e30;
+  --color-vermilion-700: #933125;
+  --color-vermilion-800: #6e2620;
+  --color-vermilion-900: #4c1b17;
+  --color-vermilion-950: #2a0f0d;
+
+  /* 草綠：綠點 */
+  --color-moss-50: #f1f8f3;
+  --color-moss-100: #dcede1;
+  --color-moss-200: #bcdcc7;
+  --color-moss-300: #9ccbac;
+  --color-moss-400: #7bb894;
+  --color-moss-500: #5ba57e;
+  --color-moss-600: #478764;
+  --color-moss-700: #376a4f;
+  --color-moss-800: #2a5040;
+  --color-moss-900: #1e392e;
+  --color-moss-950: #10201a;
+
+  /* 芥末黃：折價券 / 獎勵 */
+  --color-marigold-50: #fef9e9;
+  --color-marigold-100: #fdefc4;
+  --color-marigold-200: #fbe49b;
+  --color-marigold-300: #f8d971;
+  --color-marigold-400: #f6ce52;
+  --color-marigold-500: #f5c433;
+  --color-marigold-600: #dda715;
+  --color-marigold-700: #a87c0f;
+  --color-marigold-800: #7a5a0c;
+  --color-marigold-900: #4f3a08;
+  --color-marigold-950: #2b2004;
+
+  /* 天空藍 */
+  --color-sky-50: #f2f9fc;
+  --color-sky-100: #dceef6;
+  --color-sky-200: #bcdfee;
+  --color-sky-300: #94cbe2;
+  --color-sky-400: #6fb6d6;
+  --color-sky-500: #4e9dc2;
+  --color-sky-600: #3c7ea1;
+  --color-sky-700: #31647e;
+  --color-sky-800: #274c60;
+  --color-sky-900: #1c3644;
+  --color-sky-950: #0f1e26;
+
+  /* 土棕：店家端 */
+  --color-clay-50: #faf5f1;
+  --color-clay-100: #f0e3d8;
+  --color-clay-200: #e0c9b4;
+  --color-clay-300: #c99c74;
+  --color-clay-400: #b4835a;
+  --color-clay-500: #a06a44;
+  --color-clay-600: #835335;
+  --color-clay-700: #5f3b24;
+  --color-clay-800: #472c1b;
+  --color-clay-900: #2f1d12;
+  --color-clay-950: #180f09;
+
+  /* 靛藍：會員 / 抽獎 */
+  --color-indigoink-50: #f3f4fa;
+  --color-indigoink-100: #e3e6f3;
+  --color-indigoink-200: #c7cde6;
+  --color-indigoink-300: #9ba6d2;
+  --color-indigoink-400: #7686c4;
+  --color-indigoink-500: #4a5ca8;
+  --color-indigoink-600: #3a4988;
+  --color-indigoink-700: #2e3a6d;
+  --color-indigoink-800: #232c52;
+  --color-indigoink-900: #171d36;
+  --color-indigoink-950: #0c0f1c;
+
+  /**
+   * 圖表專用色階。UI 色票彩度偏低（紙感風格），直接畫圖會被判定成灰、
+   * 且對比不足，故另取同色相加深版本。已通過 dataviz 六項檢核：
+   *   發券 #B37F06 ↔ 核銷 #0E6FA5：CVD ΔE 22.1、正常視覺 ΔE 26.9
+   *   紅點 #C4402E ↔ 綠點 #2E7D53：CVD ΔE 7.9（6–8 下限帶，
+   *     故一律搭配圖例與直接標籤等次要編碼）
+   */
+  --color-chart-issued: #b37f06;
+  --color-chart-redeemed: #0e6fa5;
+  --color-chart-red: #c4402e;
+  --color-chart-green: #2e7d53;
+  --color-chart-grid: #e7decc;
+
+  --font-sans: "Noto Sans TC", ui-sans-serif, system-ui, -apple-system,
+    "PingFang TC", "Microsoft JhengHei", sans-serif;
+
+  --radius-card: 1.25rem;
+  --radius-blob: 2rem;
+
+  --shadow-card: 0 2px 0 0 rgb(61 58 53 / 0.06), 0 8px 24px -12px rgb(61 58 53 / 0.28);
+  --shadow-pop: 0 4px 0 0 rgb(61 58 53 / 0.1), 0 16px 32px -16px rgb(61 58 53 / 0.35);
+
+  --animate-scan-line: scan-line 1.9s ease-in-out infinite alternate;
+  --animate-pop-in: pop-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float-soft: float-soft 3.6s ease-in-out infinite;
+  --animate-ping-ring: ping-ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(224px); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper-soft);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, a { touch-action: manipulation; }
+}
+
+@layer components {
+  /* 網頁版容器：桌機置中放寬，往下自然收合 */
+  .container-page {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container-page { padding-inline: 1.5rem; }
+  }
+  @media (min-width: 1280px) {
+    .container-page { padding-inline: 2rem; }
+  }
+
+  /* 內文型頁面（註冊、會員）用較窄的欄寬 */
+  .container-narrow {
+    width: 100%;
+    max-width: 46rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  .card {
+    background-color: #fff;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 700;
+  }
+
+  /* 折價券左右的半圓缺口 */
+  .ticket-notch::before,
+  .ticket-notch::after {
+    content: "";
+    position: absolute;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background-color: var(--color-paper);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .ticket-notch::before { left: -0.625rem; }
+  .ticket-notch::after { right: -0.625rem; }
+
+  /* 手機底部導覽的安全區間距 */
+  .safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
