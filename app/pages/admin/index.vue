@@ -129,8 +129,11 @@ const flaggedStores = computed(() => STORES.filter((s) => s.flagged))
       </div>
 
       <div class="card p-4">
-        <h2 class="font-black">景點打卡排行</h2>
-        <p class="mt-0.5 mb-3 text-xs text-ink-soft">紅點 10 處 ＋ 綠點 10 處，取前 8 名</p>
+        <h2 class="font-black">站點集章排行</h2>
+        <p class="mt-0.5 mb-3 text-xs text-ink-soft">
+          {{ SPOT_KIND.experience.label }} {{ EXPERIENCE_SPOTS.length }} 處 ＋
+          {{ SPOT_KIND.highlight.label }} {{ HIGHLIGHT_SPOTS.length }} 處，取前 8 名
+        </p>
         <ChartBarRank :data="SPOT_RANK" />
       </div>
     </section>

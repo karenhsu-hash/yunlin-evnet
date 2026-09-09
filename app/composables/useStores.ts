@@ -17,7 +17,7 @@ export interface PublicStore {
   icon: string
   /** 圖庫示意照 */
   photo: string
-  /** 是否為紅點景點所在的店家 */
+  /** 是否為體驗站所在的店家 */
   nearSpot?: string
 }
 

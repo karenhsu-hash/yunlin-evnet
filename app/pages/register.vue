@@ -343,7 +343,7 @@ function fillDemo() {
         <div class="bg-vermilion-50 px-6 py-12 text-center">
           <UIcon name="i-lucide-party-popper" class="size-16 text-vermilion-500" />
           <h2 class="mt-3 text-2xl font-black sm:text-3xl">註冊完成</h2>
-          <p class="mt-1.5 text-xs text-ink-soft">現在就出發，開始你的紅配綠任務</p>
+          <p class="mt-1.5 text-xs text-ink-soft">護照已開通，現在就出發蓋下第一枚章</p>
         </div>
 
         <dl class="divide-y divide-paper-deep px-5 sm:px-7">

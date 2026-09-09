@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 景點打卡排行：紅點／綠點兩類。
+ * 站點集章排行：體驗站／亮點站兩類。
  * 這組色的 CVD ΔE 落在 6–8 的下限帶，因此一律搭配圖例 ＋ 每列直接標籤
  * ＋ 類型文字，身分不靠顏色單獨承載。
  */
@@ -15,10 +15,10 @@ const max = computed(() => Math.max(...props.data.map((d) => d.count)))
   <figure class="m-0">
     <figcaption class="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
       <span class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft">
-        <i class="w-2.5 h-2.5 rounded-sm bg-chart-red not-italic" />紅點 ‧ 可消費
+        <i class="w-2.5 h-2.5 rounded-sm bg-chart-red not-italic" />{{ SPOT_KIND.experience.label }} ‧ {{ SPOT_KIND.experience.short }}
       </span>
       <span class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft">
-        <i class="w-2.5 h-2.5 rounded-sm bg-chart-green not-italic" />綠點 ‧ 拍照
+        <i class="w-2.5 h-2.5 rounded-sm bg-chart-green not-italic" />{{ SPOT_KIND.highlight.label }} ‧ {{ SPOT_KIND.highlight.short }}
       </span>
     </figcaption>
 

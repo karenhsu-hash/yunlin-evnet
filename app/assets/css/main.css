@@ -19,7 +19,7 @@
   --color-ink-soft: #6b655c;
   --color-ink-faint: #9a9288;
 
-  /* 磚紅：主色 / 紅點 */
+  /* 磚紅：主色 / 體驗站 */
   --color-vermilion-50: #fdf4f2;
   --color-vermilion-100: #fae3de;
   --color-vermilion-200: #f5c7be;
@@ -32,7 +32,7 @@
   --color-vermilion-900: #4c1b17;
   --color-vermilion-950: #2a0f0d;
 
-  /* 草綠：綠點 */
+  /* 草綠：亮點站 */
   --color-moss-50: #f1f8f3;
   --color-moss-100: #dcede1;
   --color-moss-200: #bcdcc7;
@@ -101,7 +101,7 @@
    * 圖表專用色階。UI 色票彩度偏低（紙感風格），直接畫圖會被判定成灰、
    * 且對比不足，故另取同色相加深版本。已通過 dataviz 六項檢核：
    *   發券 #B37F06 ↔ 核銷 #0E6FA5：CVD ΔE 22.1、正常視覺 ΔE 26.9
-   *   紅點 #C4402E ↔ 綠點 #2E7D53：CVD ΔE 7.9（6–8 下限帶，
+   *   體驗站 #C4402E ↔ 亮點站 #2E7D53：CVD ΔE 7.9（6–8 下限帶，
    *     故一律搭配圖例與直接標籤等次要編碼）
    */
   --color-chart-issued: #b37f06;
