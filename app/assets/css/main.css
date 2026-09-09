@@ -45,7 +45,7 @@
   --color-moss-900: #1e392e;
   --color-moss-950: #10201a;
 
-  /* 芥末黃：折價券 / 獎勵 */
+  /* 芥末黃：優惠券 / 獎勵 */
   --color-marigold-50: #fef9e9;
   --color-marigold-100: #fdefc4;
   --color-marigold-200: #fbe49b;
@@ -199,7 +199,7 @@
     font-weight: 700;
   }
 
-  /* 折價券左右的半圓缺口 */
+  /* 優惠券左右的半圓缺口 */
   .ticket-notch::before,
   .ticket-notch::after {
     content: "";

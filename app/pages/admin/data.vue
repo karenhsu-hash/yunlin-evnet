@@ -23,10 +23,10 @@ const visibleMembers = computed(() => {
   }
 })
 
-const spotFilter = ref<'all' | 'red' | 'green'>('all')
+const spotFilter = ref<'all' | SpotType>('all')
 const visibleSpots = computed(() => {
-  if (spotFilter.value === 'red') return RED_SPOTS
-  if (spotFilter.value === 'green') return GREEN_SPOTS
+  if (spotFilter.value === 'experience') return EXPERIENCE_SPOTS
+  if (spotFilter.value === 'highlight') return HIGHLIGHT_SPOTS
   return ALL_SPOTS
 })
 
@@ -137,8 +137,8 @@ function exportStores() {
           <button
             v-for="f in ([
               { key: 'all', label: `全部 ${ALL_SPOTS.length}` },
-              { key: 'red', label: `紅點 ${RED_SPOTS.length}` },
-              { key: 'green', label: `綠點 ${GREEN_SPOTS.length}` }
+              { key: 'experience', label: `${SPOT_KIND.experience.label} ${EXPERIENCE_SPOTS.length}` },
+              { key: 'highlight', label: `${SPOT_KIND.highlight.label} ${HIGHLIGHT_SPOTS.length}` }
             ] as const)"
             :key="f.key"
             class="rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors"
@@ -176,8 +176,8 @@ function exportStores() {
                 <td class="py-2 pr-3">
                   <span
                     class="chip"
-                    :class="s.type === 'red' ? 'bg-vermilion-100 text-vermilion-700' : 'bg-moss-100 text-moss-700'"
-                  >{{ s.type === 'red' ? '紅點' : '綠點' }}</span>
+                    :class="kindOf(s.type).chip"
+                  >{{ kindOf(s.type).label }}</span>
                 </td>
                 <td class="py-2 pr-3 text-right tabular-nums">
                   {{ s.threshold ? `$${s.threshold}` : '—' }}
@@ -259,7 +259,7 @@ function exportStores() {
         <div class="mt-3 grid gap-2.5 lg:grid-cols-2">
           <div
             v-for="p in [
-              { label: '獎勵模式', value: '折價券 ＋ 店家核銷' },
+              { label: '獎勵模式', value: '優惠券 ＋ 店家核銷' },
               { label: '券面額', value: '250、500 兩種，不找零' },
               { label: '最低消費', value: `一律 ${CAMPAIGN.minSpend} 元（不分級）` },
               { label: '發放結構', value: '三段，每段一紅一綠：250 / 250 / 500' },
@@ -267,7 +267,7 @@ function exportStores() {
               { label: '券有效期', value: `發券後 ${CAMPAIGN.couponValidDays} 天，且不超過活動結束日` },
               { label: '階段間隔', value: '不限，同日可連跑三段' },
               { label: '發券審核', value: '無，即時自動核發' },
-              { label: '景點數', value: `紅 ${RED_SPOTS.length} ＋ 綠 ${GREEN_SPOTS.length} ＝ ${ALL_SPOTS.length} 組 QR` },
+              { label: '站點數', value: `${SPOT_KIND.experience.label} ${EXPERIENCE_SPOTS.length} ＋ ${SPOT_KIND.highlight.label} ${HIGHLIGHT_SPOTS.length} ＝ ${ALL_SPOTS.length} 組 QR` },
               { label: '合作店家', value: `約 ${CAMPAIGN.storeCount} 家` },
               { label: '活動總期程', value: `${CAMPAIGN.startDate} – ${CAMPAIGN.endDate}（2 個月）` },
               { label: '結算', value: '週結算核銷請款、週生抽獎名單' }

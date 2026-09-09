@@ -33,19 +33,19 @@ export const FUNNEL = [
   { label: '首次景點打卡', value: 14205 },
   { label: '完成第一段領券', value: 11380 },
   { label: '完成三段領滿', value: 6240 },
-  { label: '實際使用折價券', value: 5180 }
+  { label: '實際使用優惠券', value: 5180 }
 ]
 
 /** 景點打卡次數 TOP 8 */
 export const SPOT_RANK = [
-  { name: '北港朝天宮商圈', type: 'red' as const, count: 9840 },
-  { name: '虎尾糖廠冰城', type: 'red' as const, count: 8720 },
-  { name: '北港女兒橋', type: 'green' as const, count: 8150 },
-  { name: '虎尾鐵橋', type: 'green' as const, count: 7460 },
-  { name: '西螺延平老街', type: 'red' as const, count: 6980 },
-  { name: '古坑華山咖啡園區', type: 'red' as const, count: 5410 },
-  { name: '成龍濕地', type: 'green' as const, count: 4870 },
-  { name: '五元二角綠廊', type: 'green' as const, count: 4120 }
+  { name: '北港朝天宮商圈', type: 'experience' as const, count: 9840 },
+  { name: '虎尾糖廠冰城', type: 'experience' as const, count: 8720 },
+  { name: '北港女兒橋', type: 'highlight' as const, count: 8150 },
+  { name: '虎尾鐵橋', type: 'highlight' as const, count: 7460 },
+  { name: '西螺延平老街', type: 'experience' as const, count: 6980 },
+  { name: '古坑華山咖啡園區', type: 'experience' as const, count: 5410 },
+  { name: '成龍濕地', type: 'highlight' as const, count: 4870 },
+  { name: '五元二角綠廊', type: 'highlight' as const, count: 4120 }
 ]
 
 export interface StoreRow {

@@ -8,7 +8,7 @@ withDefaults(
   }>(),
   {
     title: '登入後查看你的專屬進度',
-    desc: '登入後就能看到你的任務進度與折價券。',
+    desc: '登入後就能看到你的任務進度與優惠券。',
     icon: 'i-lucide-lock'
   }
 )

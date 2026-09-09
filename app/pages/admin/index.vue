@@ -124,7 +124,7 @@ const flaggedStores = computed(() => STORES.filter((s) => s.flagged))
     <section class="mt-4 grid gap-4 lg:grid-cols-2">
       <div class="card p-4">
         <h2 class="font-black">參與漏斗</h2>
-        <p class="mt-0.5 mb-3 text-xs text-ink-soft">從加好友到實際使用折價券</p>
+        <p class="mt-0.5 mb-3 text-xs text-ink-soft">從加好友到實際使用優惠券</p>
         <ChartFunnel :data="FUNNEL" />
       </div>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { isLoggedIn, member, coupons, completedStages, walletAmount, earnedAmount, checkedRed, checkedGreen, resetDemo } = useCampaign()
+const { isLoggedIn, member, coupons, completedStages, walletAmount, earnedAmount, checkedExperience, checkedHighlight, resetDemo } = useCampaign()
 const { redeemRecords } = useMember()
 
 type Tab = 'task' | 'coupon' | 'redeem'
@@ -7,7 +7,7 @@ const tab = ref<Tab>('task')
 
 const tabs: { key: Tab; label: string; icon: string }[] = [
   { key: 'task', label: '任務進度', icon: 'i-lucide-target' },
-  { key: 'coupon', label: '我的折價券', icon: 'i-lucide-ticket' },
+  { key: 'coupon', label: '我的優惠券', icon: 'i-lucide-ticket' },
   { key: 'redeem', label: '核銷紀錄', icon: 'i-lucide-receipt-text' }
 ]
 
@@ -20,7 +20,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
     <div v-if="!isLoggedIn" class="container-narrow py-12 sm:py-20">
       <LoginGate
         title="登入後查看會員中心"
-        desc="登入後就能看到你的任務進度、折價券與使用紀錄。"
+        desc="登入後就能看到你的任務進度、優惠券與使用紀錄。"
         icon="i-lucide-circle-user-round"
       />
     </div>
@@ -87,7 +87,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
           <button
             class="mt-6 hidden w-full text-left text-[11px] text-ink-faint underline lg:block"
             @click="resetDemo"
-          >重置示範資料</button>
+          >重置我的紀錄</button>
         </nav>
 
         <!-- ── 內容 ──────────────────────────────── -->
@@ -107,12 +107,12 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
             </div>
 
             <div class="card p-5 sm:p-6">
-              <h3 class="text-lg font-black">已打卡景點</h3>
+              <h3 class="text-lg font-black">已蓋章站點</h3>
               <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <div
                   v-for="grp in [
-                    { label: '紅點 ‧ 可消費', ids: checkedRed, tone: 'vermilion' },
-                    { label: '綠點 ‧ 拍照打卡', ids: checkedGreen, tone: 'moss' }
+                    { label: `${SPOT_KIND.experience.label} ‧ ${SPOT_KIND.experience.short}`, ids: checkedExperience, tone: 'vermilion' },
+                    { label: `${SPOT_KIND.highlight.label} ‧ ${SPOT_KIND.highlight.short}`, ids: checkedHighlight, tone: 'moss' }
                   ]"
                   :key="grp.label"
                 >
@@ -131,7 +131,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
                       <UIcon :name="ALL_SPOTS.find((s) => s.id === id)?.icon || 'i-lucide-map-pin'" class="size-4 shrink-0" />
                       {{ ALL_SPOTS.find((s) => s.id === id)?.name }}
                     </li>
-                    <li v-if="!grp.ids.length" class="text-[11px] text-ink-faint">尚未打卡</li>
+                    <li v-if="!grp.ids.length" class="text-[11px] text-ink-faint">尚未蓋章</li>
                   </ul>
                 </div>
               </div>
@@ -141,7 +141,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
             </div>
           </div>
 
-          <!-- 我的折價券 -->
+          <!-- 我的優惠券 -->
           <div v-else-if="tab === 'coupon'">
             <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-card">
               <span class="text-sm text-ink-soft">可用餘額</span>
@@ -158,9 +158,9 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
               class="mt-4 rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
             >
               <UIcon name="i-lucide-ticket" class="size-9 text-ink-faint" />
-              <p class="mt-2 text-sm text-ink-soft">還沒有折價券</p>
+              <p class="mt-2 text-sm text-ink-soft">還沒有優惠券</p>
               <UButton to="/checkin" color="neutral" variant="outline" size="sm" class="mt-3 rounded-full font-bold">
-                去打卡
+                去蓋章
               </UButton>
             </div>
 
@@ -199,7 +199,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
           </div>
 
           <button class="mt-8 w-full text-center text-[11px] text-ink-faint underline lg:hidden" @click="resetDemo">
-            重置示範資料
+            重置我的紀錄
           </button>
         </div>
       </div>

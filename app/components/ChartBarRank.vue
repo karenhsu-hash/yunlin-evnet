@@ -5,7 +5,7 @@
  * ＋ 類型文字，身分不靠顏色單獨承載。
  */
 const props = defineProps<{
-  data: { name: string; type: 'red' | 'green'; count: number }[]
+  data: { name: string; type: SpotType; count: number }[]
 }>()
 
 const max = computed(() => Math.max(...props.data.map((d) => d.count)))
@@ -28,7 +28,7 @@ const max = computed(() => Math.max(...props.data.map((d) => d.count)))
           <span class="min-w-0 truncate text-[11px] font-bold text-ink-soft">
             <i
               class="mr-1 inline-block w-1.5 h-1.5 rounded-full align-middle not-italic"
-              :class="d.type === 'red' ? 'bg-chart-red' : 'bg-chart-green'"
+              :class="d.type === 'experience' ? 'bg-chart-red' : 'bg-chart-green'"
             />{{ d.name }}
           </span>
           <span class="shrink-0 text-[11px] font-bold tabular-nums text-ink">{{ toComma(d.count) }}</span>
@@ -36,7 +36,7 @@ const max = computed(() => Math.max(...props.data.map((d) => d.count)))
         <div class="mt-1 h-3.5 w-full rounded bg-paper-soft">
           <div
             class="h-3.5 rounded transition-all duration-500"
-            :class="d.type === 'red' ? 'bg-chart-red' : 'bg-chart-green'"
+            :class="d.type === 'experience' ? 'bg-chart-red' : 'bg-chart-green'"
             :style="{ width: `${(d.count / max) * 100}%` }"
             :title="`${d.name}：${toComma(d.count)} 次`"
           />

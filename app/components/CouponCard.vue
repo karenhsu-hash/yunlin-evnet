@@ -37,7 +37,7 @@ withDefaults(
           >
             <span class="text-sm align-top">$</span><span class="text-[34px]">{{ coupon.value }}</span>
           </p>
-          <p class="mt-1 text-[10px] font-bold text-ink-soft">折價券</p>
+          <p class="mt-1 text-[10px] font-bold text-ink-soft">優惠券</p>
         </div>
       </div>
 

@@ -21,10 +21,10 @@ const { isCheckedIn } = useCampaign()
       >
       <span
         class="absolute inset-x-0 bottom-0 flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold text-white"
-        :class="spot.type === 'red' ? 'bg-vermilion-500/90' : 'bg-moss-500/90'"
+        :class="kindOf(spot.type).pin + '/90'"
       >
         <UIcon :name="spot.icon" class="size-3 shrink-0" />
-        {{ spot.type === 'red' ? '紅點' : '綠點' }}
+        {{ kindOf(spot.type).label }}
       </span>
     </div>
 
@@ -32,8 +32,8 @@ const { isCheckedIn } = useCampaign()
       <div class="flex items-center gap-1.5">
         <span
           class="chip shrink-0"
-          :class="spot.type === 'red' ? 'bg-vermilion-100 text-vermilion-700' : 'bg-moss-100 text-moss-700'"
-        >{{ spot.type === 'red' ? '消費景點' : '拍照打卡' }}</span>
+          :class="kindOf(spot.type).chip"
+        >{{ kindOf(spot.type).short }}</span>
         <span class="text-[11px] text-ink-faint shrink-0">{{ spot.town }}</span>
       </div>
 
@@ -55,7 +55,7 @@ const { isCheckedIn } = useCampaign()
 
     <div class="shrink-0 self-center pr-1">
       <span v-if="isCheckedIn(spot.id)" class="chip bg-marigold-100 text-marigold-700">
-        <UIcon name="i-lucide-check" class="size-3.5" />已打卡
+        <UIcon name="i-lucide-check" class="size-3.5" />已蓋章
       </span>
       <UIcon
         v-else

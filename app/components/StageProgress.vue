@@ -9,7 +9,7 @@ withDefaults(
   { compact: false }
 )
 
-const { checkedRed, checkedGreen } = useCampaign()
+const { checkedExperience, checkedHighlight } = useCampaign()
 </script>
 
 <template>
@@ -45,25 +45,25 @@ const { checkedRed, checkedGreen } = useCampaign()
           :class="completed >= s.stage ? 'text-marigold-700' : 'text-ink-faint'"
         >
           <UIcon v-if="completed >= s.stage" name="i-lucide-circle-check" class="size-3.5 shrink-0" />
-          {{ completed >= s.stage ? '已入袋' : '一紅 + 一綠' }}
+          {{ completed >= s.stage ? '已入袋' : '體驗 + 亮點' }}
         </p>
       </li>
     </ol>
 
-    <!-- 紅綠打卡計數 -->
+    <!-- 兩型站點的集章計數 -->
     <div v-if="!compact" class="mt-3 flex items-center gap-2 sm:gap-3">
       <div class="flex-1 flex items-center gap-2 rounded-2xl bg-vermilion-50 px-3 py-2 sm:py-2.5">
         <span class="size-2.5 rounded-full bg-vermilion-500 shrink-0" />
-        <span class="text-xs font-bold text-vermilion-700 sm:text-sm">紅點</span>
+        <span class="text-xs font-bold text-vermilion-700 sm:text-sm">{{ SPOT_KIND.experience.label }}</span>
         <span class="ml-auto text-sm font-black text-vermilion-700 sm:text-base">
-          {{ checkedRed.length }}<span class="text-ink-faint font-bold">/3</span>
+          {{ checkedExperience.length }}<span class="text-ink-faint font-bold">/3</span>
         </span>
       </div>
       <div class="flex-1 flex items-center gap-2 rounded-2xl bg-moss-50 px-3 py-2 sm:py-2.5">
         <span class="size-2.5 rounded-full bg-moss-500 shrink-0" />
-        <span class="text-xs font-bold text-moss-700 sm:text-sm">綠點</span>
+        <span class="text-xs font-bold text-moss-700 sm:text-sm">{{ SPOT_KIND.highlight.label }}</span>
         <span class="ml-auto text-sm font-black text-moss-700 sm:text-base">
-          {{ checkedGreen.length }}<span class="text-ink-faint font-bold">/3</span>
+          {{ checkedHighlight.length }}<span class="text-ink-faint font-bold">/3</span>
         </span>
       </div>
     </div>

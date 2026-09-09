@@ -133,7 +133,6 @@ watch(() => route.path, () => (mobileOpen.value = false))
 
     <footer class="mt-8 border-t border-paper-deep bg-paper">
       <div class="container-page flex flex-wrap items-center justify-between gap-3 py-4">
-        <p class="text-xs text-ink-faint">後台為介面示意，數據均為模擬內容</p>
         <NuxtLink to="/" class="text-xs font-bold text-sky-600">← 回旅客端</NuxtLink>
       </div>
     </footer>

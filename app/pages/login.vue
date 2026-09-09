@@ -56,7 +56,7 @@ function demoLogin() {
         <img src="/images/logo.png" alt="雲林縣 捲動國旅" class="mx-auto h-16 w-auto">
         <h1 class="mt-4 text-2xl font-black sm:text-3xl">會員登入</h1>
         <p class="mt-2 text-sm text-ink-soft">
-          登入後查看你的任務進度與折價券
+          登入後查看你的任務進度與優惠券
         </p>
       </header>
 
@@ -96,7 +96,7 @@ function demoLogin() {
             class="mt-1.5 w-full"
             :ui="{ base: 'text-lg font-black tracking-[0.4em]' }"
           />
-          <p class="mt-1.5 text-[11px] text-ink-faint">輸入任意 6 位數字即可（示範用）</p>
+          <p class="mt-1.5 text-[11px] text-ink-faint">請輸入簡訊中的 6 位數驗證碼</p>
         </div>
 
         <UButton
@@ -124,7 +124,7 @@ function demoLogin() {
           icon="i-lucide-zap"
           class="mt-4 rounded-full font-bold"
           @click="demoLogin"
-        >以示範帳號快速登入</UButton>
+        >快速登入</UButton>
       </div>
 
       <p class="mt-5 text-center text-sm text-ink-soft">

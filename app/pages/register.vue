@@ -155,7 +155,7 @@ function fillDemo() {
             class="mt-1.5 w-full"
             :ui="{ base: 'text-lg font-black tracking-[0.4em]' }"
           />
-          <p class="mt-1.5 text-[11px] text-ink-faint">輸入任意 6 位數字即可（示範用）</p>
+          <p class="mt-1.5 text-[11px] text-ink-faint">請輸入簡訊中的 6 位數驗證碼</p>
         </div>
 
         <UButton
@@ -170,7 +170,7 @@ function fillDemo() {
       </div>
 
       <button class="mt-3 w-full text-xs text-ink-faint underline" @click="fillDemo">
-        快速帶入示範資料
+        快速帶入資料
       </button>
     </section>
 
@@ -241,7 +241,7 @@ function fillDemo() {
         <h2 class="flex items-center gap-2 text-lg font-black">
           <UIcon name="i-lucide-compass" class="size-5 text-vermilion-500" />選擇身分
         </h2>
-        <p class="mt-1 text-xs text-ink-soft">兩種身分的折價券條件完全相同</p>
+        <p class="mt-1 text-xs text-ink-soft">兩種身分的優惠券條件完全相同</p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
           <button
@@ -270,7 +270,7 @@ function fillDemo() {
           variant="soft"
           icon="i-lucide-triangle-alert"
           title="所選身分與通訊地址判別不一致"
-          description="折價券條件不受影響；如填報不實，主辦單位得取消參加資格。"
+          description="優惠券條件不受影響；如填報不實，主辦單位得取消參加資格。"
           class="mt-4"
         />
 
@@ -315,7 +315,7 @@ function fillDemo() {
           </div>
 
           <ul class="mt-4 space-y-2 text-xs text-ink-soft">
-            <li v-for="t in ['任務完成、折價券到帳即時通知', '活動與店家最新消息', '推播頻率低，不擾民']" :key="t" class="flex items-center gap-2">
+            <li v-for="t in ['任務完成、優惠券到帳即時通知', '活動與店家最新消息', '推播頻率低，不擾民']" :key="t" class="flex items-center gap-2">
               <UIcon name="i-lucide-check" class="size-4 shrink-0 text-moss-600" />{{ t }}
             </li>
           </ul>

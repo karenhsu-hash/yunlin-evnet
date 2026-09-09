@@ -14,7 +14,7 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#FDF9F0' },
         {
           name: 'description',
-          content: '雲林縣觀光促進活動：走訪紅綠景點、完成三段任務，最高領 1,000 元折價券。'
+          content: '雲林縣觀光促進活動：走訪各地亮點、完成行程任務，最高領 1,000 元優惠券。'
         }
       ],
       link: [

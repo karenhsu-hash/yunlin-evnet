@@ -8,7 +8,7 @@ const links = [
   { label: '活動景點', to: '/events', icon: 'i-lucide-map' },
   { label: '合作店家', to: '/stores', icon: 'i-lucide-store' },
   { label: '活動辦法', to: '/rules', icon: 'i-lucide-scroll-text' },
-  { label: '我要打卡', to: '/checkin', icon: 'i-lucide-qr-code' }
+  { label: '護照集章', to: '/checkin', icon: 'i-lucide-stamp' }
 ]
 
 const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
@@ -153,9 +153,6 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
           </nav>
         </div>
 
-        <p class="mt-6 border-t border-paper-deep pt-4 text-[11px] text-ink-faint">
-          本站為介面示意，內容為模擬資料。
-        </p>
       </div>
     </footer>
   </div>

@@ -216,7 +216,7 @@ const GA = [
 
           <dl class="mt-3 space-y-2 text-sm">
             <div class="flex justify-between border-b border-paper-deep pb-2">
-              <dt class="text-ink-soft">折價券折抵金額</dt>
+              <dt class="text-ink-soft">優惠券折抵金額</dt>
               <dd class="font-bold tabular-nums">${{ toComma(totalRedeemed) }}</dd>
             </div>
             <div class="flex justify-between border-b border-paper-deep pb-2">

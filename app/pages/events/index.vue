@@ -1,27 +1,51 @@
 <script setup lang="ts">
-const { isCheckedIn } = useCampaign()
+/**
+ * 活動景點 —— 以「遊樂路線」為主結構。
+ *
+ * 前一版是紅點／綠點的顏色分類（紅配綠湊組合）。改成遊樂路線之後，旅客的心智模型
+ * 是「今天走哪一條」，不是「我還缺一個綠」，所以頁籤改成路線，站點類型退居為
+ * 每一站的角色標籤（體驗站／亮點站），名稱與配色統一由 SPOT_KIND 提供。
+ *
+ * 路線只是建議動線，不綁定走訪順序 —— 強制順序會被 GPS 誤差與臨時改行程打爆。
+ */
+const { isCheckedIn, routeProgress } = useCampaign()
 
-type Filter = 'all' | 'red' | 'green' | 'todo'
-const filter = ref<Filter>('all')
+/** 'all' = 不限路線，看全部站點 */
+const activeRouteId = ref<string>('all')
+const activeRoute = computed(() => ROUTES.find((r) => r.id === activeRouteId.value) ?? null)
 
-const filters: { key: Filter; label: string; count: number | null }[] = [
-  { key: 'all', label: '全部', count: ALL_SPOTS.length },
-  { key: 'red', label: '紅點', count: RED_SPOTS.length },
-  { key: 'green', label: '綠點', count: GREEN_SPOTS.length },
-  { key: 'todo', label: '未打卡', count: null }
-]
+/** 只看還沒蓋章的 */
+const todoOnly = ref(false)
 
-const visibleSpots = computed(() => {
-  switch (filter.value) {
-    case 'red': return RED_SPOTS
-    case 'green': return GREEN_SPOTS
-    case 'todo': return ALL_SPOTS.filter((s) => !isCheckedIn(s.id))
-    default: return ALL_SPOTS
-  }
+/** 目前路線的站點，照行程順序排；未選路線時是全部站點 */
+const routeSpots = computed(() => {
+  if (!activeRoute.value) return ALL_SPOTS
+  const ids = routeSpotIds(activeRoute.value)
+  return ALL_SPOTS.filter((s) => ids.includes(s.id)).sort(
+    (a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)
+  )
 })
+
+const visibleSpots = computed(() =>
+  todoOnly.value ? routeSpots.value.filter((s) => !isCheckedIn(s.id)) : routeSpots.value
+)
+
+/** 站點在目前路線裡的順序（1 起算），用來在地圖上標出動線 */
+const orderOf = computed(() => {
+  const m = new Map<string, number>()
+  if (activeRoute.value) routeSpotIds(activeRoute.value).forEach((id, i) => m.set(id, i + 1))
+  return m
+})
+
+const spotOf = (id: string) => ALL_SPOTS.find((s) => s.id === id)
 
 const activePin = ref<string | null>(null)
 const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value) || null)
+
+/** 換路線時收起展開的站點，免得看到不屬於這條路線的卡片 */
+watch(activeRouteId, () => {
+  activePin.value = null
+})
 </script>
 
 <template>
@@ -36,14 +60,105 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/85 to-paper/30" />
 
       <div class="container-page py-10">
-        <span class="chip bg-vermilion-500 text-white">紅配綠 ‧ 三段任務</span>
+        <span class="chip bg-vermilion-500 text-white">{{ ROUTES.length }} 條路線 ‧ 三段解鎖</span>
         <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">活動景點</h1>
         <p class="mt-2 max-w-lg text-sm text-ink-soft sm:text-base">
-          紅點吃喝買、綠點拍美照，{{ ALL_SPOTS.length }} 個亮點等你走一趟。
+          選一條路線走一趟，{{ ALL_SPOTS.length }} 個站點串起雲林的海味、田野與山線。
         </p>
       </div>
     </section>
 
+    <!-- ── 路線頁籤 ─────────────────────────────── -->
+    <section class="container-page pt-6 sm:pt-8">
+      <div class="flex flex-wrap gap-2 sm:gap-2.5" role="tablist" aria-label="遊樂路線">
+        <button
+          role="tab"
+          :aria-selected="activeRouteId === 'all'"
+          class="rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors"
+          :class="activeRouteId === 'all'
+            ? 'border-ink bg-ink text-white'
+            : 'border-paper-deep bg-white text-ink-soft hover:border-ink/40'"
+          @click="activeRouteId = 'all'"
+        >
+          全部站點
+          <span class="opacity-70">{{ ALL_SPOTS.length }}</span>
+        </button>
+
+        <button
+          v-for="r in ROUTES"
+          :key="r.id"
+          role="tab"
+          :aria-selected="activeRouteId === r.id"
+          class="flex items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors"
+          :class="activeRouteId === r.id
+            ? 'border-ink bg-ink text-white'
+            : 'border-paper-deep bg-white text-ink-soft hover:border-ink/40'"
+          @click="activeRouteId = r.id"
+        >
+          <UIcon :name="r.icon" class="size-4 shrink-0" />
+          {{ r.name }}
+          <span
+            v-if="r.featured"
+            class="rounded-full px-1.5 py-px text-[10px] font-black"
+            :class="activeRouteId === r.id ? 'bg-white/20 text-white' : 'bg-marigold-100 text-marigold-700'"
+          >首推</span>
+        </button>
+      </div>
+
+      <!-- 選中路線的介紹與行程 -->
+      <div v-if="activeRoute" class="mt-4 card p-5 animate-pop-in sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="text-lg font-black sm:text-xl">{{ activeRoute.name }}</h2>
+            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ activeRoute.tagline }}</p>
+          </div>
+          <div class="shrink-0 text-right">
+            <p class="text-[11px] font-bold text-ink-faint">完成解鎖</p>
+            <p class="text-sm font-black text-marigold-700">{{ activeRoute.achievement }}</p>
+          </div>
+        </div>
+
+        <!-- 行程動線：A → B → C，分日呈現 -->
+        <div class="mt-4 space-y-3">
+          <div v-for="day in activeRoute.days" :key="day.label">
+            <p class="text-[11px] font-black tracking-wider text-ink-faint">{{ day.label }}</p>
+            <ol class="mt-1.5 flex flex-wrap items-center gap-x-1 gap-y-2">
+              <template v-for="(id, i) in day.spotIds" :key="id">
+                <UIcon v-if="i > 0" name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-ink-faint" />
+                <li>
+                  <button
+                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors"
+                    :class="isCheckedIn(id)
+                      ? 'border-moss-500 bg-moss-50 text-moss-700'
+                      : 'border-paper-deep bg-white text-ink hover:border-ink/40'"
+                    @click="activePin = activePin === id ? null : id"
+                  >
+                    <UIcon
+                      :name="isCheckedIn(id) ? 'i-lucide-check' : kindOf(spotOf(id)!.type).icon"
+                      class="size-3.5 shrink-0"
+                    />
+                    {{ spotOf(id)?.name }}
+                  </button>
+                </li>
+              </template>
+            </ol>
+          </div>
+        </div>
+
+        <!-- 這條路線走了幾站 -->
+        <div class="mt-4 flex items-center gap-3 border-t border-paper-deep pt-3.5">
+          <div class="h-2 flex-1 overflow-hidden rounded-full bg-paper-deep">
+            <div
+              class="h-full rounded-full bg-marigold-500 transition-[width] duration-500"
+              :style="{ width: `${(routeProgress(activeRoute).done / routeProgress(activeRoute).total) * 100}%` }"
+            />
+          </div>
+          <p class="shrink-0 text-xs font-bold text-ink-soft">
+            {{ routeProgress(activeRoute).done }} / {{ routeProgress(activeRoute).total }} 站
+          </p>
+        </div>
+      </div>
+    </section>
 
     <!-- ── 地圖 + 清單 ──────────────────────────── -->
     <section class="container-page py-6 sm:py-8">
@@ -51,7 +166,9 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
         <!-- 地圖 -->
         <div class="lg:col-span-3">
           <div class="lg:sticky lg:top-24">
-            <h2 class="mb-3 text-lg font-black sm:text-xl">景點分布</h2>
+            <h2 class="mb-3 text-lg font-black sm:text-xl">
+              {{ activeRoute ? '路線動線' : '站點分布' }}
+            </h2>
             <div
               class="relative aspect-4/5 w-full overflow-hidden rounded-card border-2 border-paper-deep
                      bg-gradient-to-b from-sky-100 via-moss-50 to-marigold-50 sm:aspect-4/3"
@@ -73,16 +190,21 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
                 <span
                   v-if="!isCheckedIn(spot.id)"
                   class="absolute size-7 rounded-full animate-ping-ring"
-                  :class="spot.type === 'red' ? 'bg-vermilion-500' : 'bg-moss-500'"
+                  :class="kindOf(spot.type).pin"
                 />
                 <span
                   class="relative grid place-items-center size-9 rounded-full border-2 border-white text-white shadow-card"
                   :class="[
-                    spot.type === 'red' ? 'bg-vermilion-500' : 'bg-moss-500',
+                    kindOf(spot.type).pin,
                     activePin === spot.id ? 'ring-4 ring-white/70 scale-110' : ''
                   ]"
                 >
+                  <!-- 選了路線就標序號（第幾站），沒選路線才顯示站點圖示 -->
+                  <span v-if="orderOf.get(spot.id)" class="text-xs font-black">
+                    {{ orderOf.get(spot.id) }}
+                  </span>
                   <UIcon
+                    v-else
                     :name="isCheckedIn(spot.id) ? 'i-lucide-check' : spot.icon"
                     class="size-4.5"
                   />
@@ -90,11 +212,13 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
               </button>
 
               <div class="absolute bottom-3 left-3 flex flex-col gap-1 rounded-2xl bg-white/85 px-3 py-2 backdrop-blur">
-                <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
-                  <i class="size-2.5 rounded-full bg-vermilion-500 not-italic" />紅點 ‧ 需消費
-                </span>
-                <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
-                  <i class="size-2.5 rounded-full bg-moss-500 not-italic" />綠點 ‧ 拍照
+                <span
+                  v-for="k in (['experience', 'highlight'] as const)"
+                  :key="k"
+                  class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft"
+                >
+                  <i class="size-2.5 rounded-full not-italic" :class="SPOT_KIND[k].dot" />
+                  {{ SPOT_KIND[k].label }} ‧ {{ SPOT_KIND[k].short }}
                 </span>
               </div>
             </div>
@@ -104,7 +228,7 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
             </div>
             <p v-else class="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-faint">
               <UIcon name="i-lucide-mouse-pointer-click" class="size-4" />
-              點一下地圖上的標記看景點詳情
+              點一下地圖上的標記看站點詳情
             </p>
           </div>
         </div>
@@ -112,27 +236,21 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
         <!-- 清單 -->
         <div class="lg:col-span-2">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-black sm:text-xl">景點清單</h2>
-            <span class="text-xs text-ink-faint">依距離排序</span>
-          </div>
-
-          <div class="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <h2 class="text-lg font-black sm:text-xl">
+              {{ activeRoute ? '本路線站點' : '站點清單' }}
+            </h2>
             <button
-              v-for="f in filters"
-              :key="f.key"
-              class="shrink-0 flex items-center gap-1.5 rounded-full border-2 px-3.5 py-1.5 text-xs font-bold transition-colors"
-              :class="filter === f.key ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
-              @click="filter = f.key"
+              class="flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors"
+              :class="todoOnly ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
+              @click="todoOnly = !todoOnly"
             >
-              <i
-                v-if="f.key === 'red' || f.key === 'green'"
-                class="size-2 rounded-full not-italic"
-                :class="f.key === 'red' ? 'bg-vermilion-500' : 'bg-moss-500'"
-              />
-              {{ f.label }}
-              <span v-if="f.count !== null" class="opacity-70">{{ f.count }}</span>
+              <UIcon :name="todoOnly ? 'i-lucide-check-square' : 'i-lucide-square'" class="size-3.5" />
+              只看未蓋章
             </button>
           </div>
+          <p class="mt-1 text-xs text-ink-faint">
+            {{ activeRoute ? '依建議動線排序，實際走訪順序不限' : '依距離排序' }}
+          </p>
 
           <div class="mt-4 space-y-3">
             <SpotCard v-for="spot in visibleSpots" :key="spot.id" :spot="spot" />
@@ -141,7 +259,9 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
               class="rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
             >
               <UIcon name="i-lucide-party-popper" class="size-8 text-marigold-500" />
-              <p class="mt-2 text-sm text-ink-soft">所有景點都打完卡了</p>
+              <p class="mt-2 text-sm text-ink-soft">
+                {{ activeRoute ? '這條路線的章都蓋滿了' : '所有站點的章都蓋滿了' }}
+              </p>
             </div>
           </div>
         </div>
@@ -154,20 +274,21 @@ const activeSpot = computed(() => ALL_SPOTS.find((s) => s.id === activePin.value
         <h2 class="border-b-2 border-ink pb-2.5 text-xl font-black text-ink sm:text-2xl">玩法說明</h2>
 
         <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
-          本活動以「紅配綠」為核心機制，將雲林各觀光亮點分為紅點與綠點兩類。
-          旅客於景點現場掃描專屬 QR code 完成到訪紀錄，並以「一紅一綠」為一組，
-          分三段依序解鎖折價券獎勵，最高可累積 {{ toComma(CAMPAIGN.quota) }} 元，
-          於全縣合作店家直接折抵。
+          本活動規劃 {{ ROUTES.length }} 條遊樂路線，串起雲林 {{ ALL_SPOTS.length }} 個活動站點。
+          旅客於站點現場掃描專屬 QR code 完成到訪紀錄，並以「一個{{ SPOT_KIND.experience.label }} ＋
+          一個{{ SPOT_KIND.highlight.label }}」為一組，分三段依序解鎖優惠券獎勵，
+          最高可累積 {{ toComma(CAMPAIGN.quota) }} 元，於全縣合作店家直接折抵。
         </p>
 
         <ol class="mt-6 space-y-4">
           <li
             v-for="(t, i) in [
-              `紅點為可消費景點，共 ${RED_SPOTS.length} 處，包含老街、商圈與觀光工廠等。旅客須於現場消費滿 ${CAMPAIGN.minSpend} 元後掃碼，始認定完成。`,
-              `綠點為不可消費景點，共 ${GREEN_SPOTS.length} 處，包含步道、濕地與風景區等。以拍照打卡或直接掃碼即可完成。`,
-              '完成「一紅點 ＋ 一綠點」為一組。三段依序解鎖：第一段 250 元、第二段 250 元、第三段 500 元。',
-              '各階段之完成間隔不限，同一日內連續完成三段亦可；符合條件後由系統即時自動核發折價券。',
-              '同一會員於同一景點僅計算一次，重複掃碼不重複計入。'
+              `${ROUTES.length} 條路線為建議動線，不限定走訪順序，也不限定只能完成一條。`,
+              `${SPOT_KIND.experience.label}共 ${EXPERIENCE_SPOTS.length} 處：${SPOT_KIND.experience.desc}`,
+              `${SPOT_KIND.highlight.label}共 ${HIGHLIGHT_SPOTS.length} 處：${SPOT_KIND.highlight.desc}`,
+              '完成「一個體驗站 ＋ 一個亮點站」為一組。三段依序解鎖：第一段 250 元、第二段 250 元、第三段 500 元。',
+              '各階段之完成間隔不限，同一日內連續完成三段亦可；符合條件後由系統即時自動核發優惠券。',
+              '同一會員於同一站點僅計算一次，重複掃碼不重複計入。'
             ]"
             :key="i"
             class="flex gap-3.5"

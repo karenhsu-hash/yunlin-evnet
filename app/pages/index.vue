@@ -5,6 +5,14 @@ const nearbySpots = computed(() =>
   [...ALL_SPOTS].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 8)
 )
 
+/**
+ * 遊樂路線選擇。預設落在首推那條（0828 更新內容的親子二日遊），
+ * 找不到就退回第一條，之後改動 ROUTES 的順序也不會壞掉。
+ */
+const activeRouteId = ref((ROUTES.find((r) => r.featured) ?? ROUTES[0]!).id)
+const currentRoute = computed(() => ROUTES.find((r) => r.id === activeRouteId.value)!)
+const spotOf = (id: string) => ALL_SPOTS.find((s) => s.id === id)
+
 /** 形象展示：本案的三個主張 */
 const brandPoints = [
   {
@@ -20,7 +28,7 @@ const brandPoints = [
   {
     icon: 'i-lucide-route',
     title: '走得越深，拿得越多',
-    desc: '一紅一綠湊成一組，三段任務最高帶走 1,000 元折價券，在合作店家直接折抵。'
+    desc: '沿著路線一站一站集章，最高帶走 1,000 元優惠券，在合作店家直接折抵。'
   }
 ]
 
@@ -29,20 +37,20 @@ const steps = [
   {
     key: 'scan',
     icon: 'i-lucide-qr-code',
-    title: '走到景點',
-    desc: '在現場掃一下 QR code，就完成到訪紀錄。'
+    title: '領取旅遊護照',
+    desc: '登入後選一條遊樂路線，護照就開通了。'
   },
   {
-    key: 'pair',
+    key: 'point',
     icon: 'i-lucide-circle-dot',
-    title: '湊一紅一綠',
-    desc: '紅點吃喝買、綠點拍美照，兩個湊成一組。'
+    title: '沿途集章',
+    desc: '每到一站掃碼或定位，就在護照上蓋一枚章。'
   },
   {
     key: 'coupon',
     icon: 'i-lucide-ticket',
-    title: '折價券入袋',
-    desc: '完成當下立刻發券，直接進你的券包。'
+    title: '優惠券入袋',
+    desc: '集滿指定章數立刻發券，直接進你的券包。'
   }
 ]
 
@@ -71,11 +79,11 @@ function scrollToContent() {
 }
 
 const faqItems = [
-  { label: '折價券可以找零嗎？', content: '不找零。消費金額若低於券面額，差額不退還。' },
+  { label: '優惠券怎麼用？', content: '到指定店家出示優惠券即可兌換。' },
   { label: '每人最多可以領多少？', content: `三段任務合計 ${toComma(CAMPAIGN.quota)} 元，這是每人上限。` },
   { label: '券的有效期多久？', content: `發券後 ${CAMPAIGN.couponValidDays} 天內，且不超過活動結束日 ${CAMPAIGN.endDate}。` },
   { label: '三段一定要分天完成嗎？', content: '不用，同一天也可以連續跑完三段。' },
-  { label: '哪裡可以使用折價券？', content: `全縣約 ${CAMPAIGN.storeCount} 家合作店家，小吃、伴手禮、餐廳、咖啡、體驗與住宿都有。` }
+  { label: '哪裡可以使用優惠券？', content: `全縣約 ${CAMPAIGN.storeCount} 家合作店家，小吃、伴手禮、餐廳、咖啡、體驗與住宿都有。` }
 ]
 </script>
 
@@ -103,7 +111,7 @@ const faqItems = [
             :icon="isLoggedIn ? 'i-lucide-qr-code' : 'i-lucide-user-plus'"
             class="rounded-full font-bold shadow-pop"
             @click="scrollToContent"
-          >{{ isLoggedIn ? '馬上打卡' : '馬上參加' }}</UButton>
+          >{{ isLoggedIn ? '馬上集章' : '馬上參加' }}</UButton>
           <UButton
             size="xl"
             color="neutral"
@@ -131,9 +139,8 @@ const faqItems = [
       </h1>
 
       <p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base">
-        走訪雲林紅綠景點，完成「一紅一綠」三段任務，
-        最高帶走 <b class="text-vermilion-600">{{ toComma(CAMPAIGN.quota) }} 元</b>折價券，
-        在合作店家直接折抵。
+        走訪雲林各地亮點，完成旅遊護照任務，
+        <b class="text-vermilion-600">沿途集章解鎖優惠</b>，在合作店家直接兌換。
       </p>
 
       <!-- 手機版行動點 -->
@@ -144,7 +151,7 @@ const faqItems = [
           :icon="isLoggedIn ? 'i-lucide-qr-code' : 'i-lucide-user-plus'"
           class="rounded-full font-bold"
           @click="scrollToContent"
-        >{{ isLoggedIn ? '馬上打卡' : '馬上參加' }}</UButton>
+        >{{ isLoggedIn ? '馬上集章' : '馬上參加' }}</UButton>
         <UButton
           size="xl"
           color="neutral"
@@ -164,9 +171,9 @@ const faqItems = [
             <span class="chip bg-vermilion-100 text-vermilion-700">
               <UIcon name="i-lucide-user-plus" class="size-3.5" />三步驟開始
             </span>
-            <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開始累積你的折價券</h2>
+            <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開始累積你的優惠券</h2>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-              手機號碼驗證就能加入，馬上開始收集你的折價券。
+              手機號碼驗證就能加入，馬上開始收集你的優惠券。
             </p>
 
             <ol class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
@@ -201,9 +208,9 @@ const faqItems = [
 
       <dl class="mt-5 grid grid-cols-3 divide-x divide-paper-deep rounded-card bg-white py-5 shadow-card">
         <div v-for="s in [
-          { k: '紅點景點', v: `${RED_SPOTS.length} 處` },
-          { k: '綠點景點', v: `${GREEN_SPOTS.length} 處` },
-          { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` }
+          { k: '活動亮點', v: `${ALL_SPOTS.length} 處` },
+          { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` },
+          { k: '最高回饋', v: `${toComma(CAMPAIGN.quota)} 元` }
         ]" :key="s.k" class="px-3 text-center">
           <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
           <dd class="mt-1 text-2xl font-black text-ink sm:text-3xl">{{ s.v }}</dd>
@@ -223,7 +230,7 @@ const faqItems = [
 
     <!-- ══ 怎麼玩：一到三，由左至右 ═══════════════ -->
     <section class="container-page pt-12 sm:pt-16">
-      <SectionHead title="怎麼玩" :sub="`三個步驟，最高帶走 ${toComma(CAMPAIGN.quota)} 元`" />
+      <SectionHead title="怎麼玩" sub="領取護照，沿途集章，優惠券入袋" />
 
       <div
         class="relative mt-8"
@@ -265,11 +272,101 @@ const faqItems = [
       </div>
     </section>
 
+    <!-- ══ 遊樂路線：文字頁籤 ＋ A→B→C 動線 ═══════ -->
+    <section class="container-page pt-12 sm:pt-16">
+      <SectionHead
+        title="遊樂路線"
+        :sub="`${ROUTES.length} 條路線，選一條走一趟`"
+        to="/events"
+        more="看全部站點"
+      />
+
+      <!-- 路線頁籤。純文字，手機自動換行成兩列 -->
+      <div class="mt-5 flex flex-wrap gap-2 sm:gap-2.5" role="tablist" aria-label="遊樂路線">
+        <button
+          v-for="r in ROUTES"
+          :key="r.id"
+          role="tab"
+          :aria-selected="activeRouteId === r.id"
+          class="flex items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors"
+          :class="activeRouteId === r.id
+            ? 'border-ink bg-ink text-white'
+            : 'border-paper-deep bg-white text-ink-soft hover:border-ink/40'"
+          @click="activeRouteId = r.id"
+        >
+          <UIcon :name="r.icon" class="size-4 shrink-0" />
+          {{ r.name }}
+          <span
+            v-if="r.featured"
+            class="rounded-full px-1.5 py-px text-[10px] font-black"
+            :class="activeRouteId === r.id ? 'bg-white/20 text-white' : 'bg-marigold-100 text-marigold-700'"
+          >首推</span>
+        </button>
+      </div>
+
+      <!-- 選中路線的行程動線 -->
+      <div :key="currentRoute.id" class="card mt-4 p-5 animate-pop-in sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="text-lg font-black sm:text-xl">{{ currentRoute.name }}</h3>
+            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ currentRoute.tagline }}</p>
+          </div>
+          <span class="chip shrink-0 bg-marigold-100 text-marigold-700">
+            <UIcon name="i-lucide-award" class="size-3.5" />
+            完成解鎖 ‧ {{ currentRoute.achievement }}
+          </span>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          <div v-for="day in currentRoute.days" :key="day.label">
+            <p class="text-[11px] font-black tracking-wider text-ink-faint">{{ day.label }}</p>
+            <ol class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-2">
+              <template v-for="(id, i) in day.spotIds" :key="id">
+                <UIcon v-if="i > 0" name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-ink-faint" />
+                <li>
+                  <NuxtLink
+                    :to="`/checkin?spot=${id}`"
+                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors"
+                    :class="checkedIn.includes(id)
+                      ? 'border-moss-500 bg-moss-50 text-moss-700'
+                      : 'border-paper-deep bg-white text-ink hover:border-ink/40'"
+                  >
+                    <UIcon
+                      :name="checkedIn.includes(id) ? 'i-lucide-check' : kindOf(spotOf(id)!.type).icon"
+                      class="size-3.5 shrink-0"
+                    />
+                    {{ spotOf(id)?.name }}
+                  </NuxtLink>
+                </li>
+              </template>
+            </ol>
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-paper-deep pt-4">
+          <span
+            v-for="k in (['experience', 'highlight'] as const)"
+            :key="k"
+            class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft"
+          >
+            <i class="size-2 rounded-full not-italic" :class="SPOT_KIND[k].dot" />
+            {{ SPOT_KIND[k].label }} ‧ {{ SPOT_KIND[k].short }}
+          </span>
+          <NuxtLink
+            to="/events"
+            class="group ml-auto flex items-center gap-0.5 text-xs font-bold text-sky-600 sm:text-sm"
+          >
+            在地圖上看這條路線
+            <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-hover:translate-x-0.5" />
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
     <!-- ══ 離你最近的亮點 ═══════════════════════ -->
     <section class="container-page pt-12 sm:pt-16">
       <SectionHead
         title="離你最近的亮點"
-        :sub="`紅點 ${RED_SPOTS.length} 處 ‧ 綠點 ${GREEN_SPOTS.length} 處`"
         to="/events"
       />
       <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -287,14 +384,6 @@ const faqItems = [
               class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
             >
             <div class="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent" />
-
-            <span
-              class="absolute top-2.5 left-2.5 chip text-white"
-              :class="spot.type === 'red' ? 'bg-vermilion-500' : 'bg-moss-500'"
-            >
-              <UIcon :name="spot.icon" class="size-3.5" />
-              {{ spot.type === 'red' ? '紅點' : '綠點' }}
-            </span>
 
             <span
               v-if="checkedIn.includes(spot.id)"
@@ -332,7 +421,7 @@ const faqItems = [
         <div class="min-w-0 flex-1">
           <h2 class="text-xl font-black">帶著券去吃喝</h2>
           <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">
-            全縣約 {{ CAMPAIGN.storeCount }} 家合作店家 —— 小吃、伴手禮、餐廳、咖啡、體驗與住宿，結帳時出示折價券當場折抵。
+            全縣約 {{ CAMPAIGN.storeCount }} 家合作店家 —— 小吃、伴手禮、餐廳、咖啡、體驗與住宿，結帳時出示優惠券當場折抵。
           </p>
         </div>
         <span class="flex shrink-0 items-center gap-1 text-sm font-bold text-sky-600">

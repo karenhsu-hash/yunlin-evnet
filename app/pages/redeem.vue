@@ -161,7 +161,7 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
           <!-- 步驟 1：出示券 -->
           <section v-if="step === 'pick'" class="mt-5">
-            <h2 class="text-lg font-black sm:text-xl">請消費者出示折價券</h2>
+            <h2 class="text-lg font-black sm:text-xl">請消費者出示優惠券</h2>
             <p class="mt-1 text-xs text-ink-soft">店家零設備、零掃描；由店家在本頁選取消費者出示的券</p>
 
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -232,7 +232,7 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
                   <dd class="font-bold">${{ amountNum }}</dd>
                 </div>
                 <div class="flex justify-between">
-                  <dt class="text-ink-soft">折價券折抵</dt>
+                  <dt class="text-ink-soft">優惠券折抵</dt>
                   <dd class="font-bold text-vermilion-600">－${{ picked.value }}</dd>
                 </div>
                 <div v-if="forfeited" class="flex justify-between rounded-xl bg-marigold-50 px-2.5 py-2 text-xs">
@@ -305,7 +305,6 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
                 </button>
               </div>
 
-              <p class="mt-4 text-center text-[10px] text-white/40">示意用核銷碼：{{ MERCHANT.code }}</p>
             </div>
 
             <div class="mt-4 card max-w-md p-4">

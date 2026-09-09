@@ -24,7 +24,7 @@ const chapters: Chapter[] = [
     title: '活動期間',
     items: [
       { text: `活動期間自 <b>${CAMPAIGN.startDate}</b> 起至 <b>${CAMPAIGN.endDate}</b> 止，為期二個月。` },
-      { text: `折價券之使用期限為發券後 <b>${CAMPAIGN.couponValidDays} 天</b>內，且不得超過活動結束日。` },
+      { text: `優惠券之使用期限為發券後 <b>${CAMPAIGN.couponValidDays} 天</b>內，且不得超過活動結束日。` },
       { text: '活動期間內，主辦單位得視實際執行情形調整活動內容，並於官方網站公告。' }
     ]
   },
@@ -49,24 +49,29 @@ const chapters: Chapter[] = [
   {
     id: 'mission',
     no: '三',
-    title: '活動機制：紅配綠三段任務',
-    intro: '本活動以「紅配綠」為核心機制，引導旅客走訪雲林各觀光亮點，並將消費留在在地合作店家。',
+    title: '活動機制：遊樂路線與三段任務',
+    intro: `本活動規劃 ${ROUTES.length} 條遊樂路線，引導旅客照行程走訪雲林各觀光亮點，並將消費留在在地合作店家。`,
     items: [
       {
-        text: `活動景點共 <b>${ALL_SPOTS.length} 處</b>，分為兩類：`,
+        text: `本活動規劃 <b>${ROUTES.length} 條遊樂路線</b>，旅客可自由選擇一條或多條走訪：`,
+        subs: ROUTES.map((r) => `${r.name}：${r.tagline}`)
+      },
+      { text: '路線僅為建議動線，<b>不限定走訪順序</b>，亦不限定僅能完成單一路線。' },
+      {
+        text: `活動站點共 <b>${ALL_SPOTS.length} 處</b>，分為兩類：`,
         subs: [
-          `紅點（可消費景點）${RED_SPOTS.length} 處：老街、商圈、觀光工廠等，須於現場消費滿 ${CAMPAIGN.minSpend} 元。`,
-          `綠點（不可消費景點）${GREEN_SPOTS.length} 處：步道、濕地、風景區等，以拍照打卡完成。`
+          `${SPOT_KIND.experience.label}（可消費站點）${EXPERIENCE_SPOTS.length} 處：老街、商圈、觀光工廠與食農食漁體驗等，須於現場消費滿 ${CAMPAIGN.minSpend} 元。`,
+          `${SPOT_KIND.highlight.label}（不可消費站點）${HIGHLIGHT_SPOTS.length} 處：步道、濕地、風景區等，以拍照打卡完成。`
         ]
       },
       { text: '每一景點於現場設置專屬 QR code。旅客掃碼時，系統擷取所在位置並與景點座標比對，確認到訪後記入該會員之任務進度。' },
       { text: '<b>同一會員於同一景點僅計算一次</b>，重複掃碼不重複計入。' },
       {
-        text: '完成「一紅點 ＋ 一綠點」為一組，共分三段解鎖獎勵：',
+        text: `完成「一個${SPOT_KIND.experience.label} ＋ 一個${SPOT_KIND.highlight.label}」為一組，共分三段解鎖獎勵：`,
         subs: [
-          '第一段（一紅 ＋ 一綠）：折價券 250 元',
-          '第二段（一紅 ＋ 一綠）：折價券 250 元',
-          '第三段（一紅 ＋ 一綠）：折價券 500 元'
+          '第一段（體驗 ＋ 亮點）：優惠券 250 元',
+          '第二段（體驗 ＋ 亮點）：優惠券 250 元',
+          '第三段（體驗 ＋ 亮點）：優惠券 500 元'
         ]
       },
       { text: `三段合計 <b>${toComma(CAMPAIGN.quota)} 元</b>，為每人可領取之上限。` },
@@ -76,32 +81,32 @@ const chapters: Chapter[] = [
   {
     id: 'issue',
     no: '四',
-    title: '折價券發放',
+    title: '優惠券發放',
     items: [
-      { text: '完成各階段條件後，系統<b>即時自動核發</b>對應面額之折價券，不另設審核程序。' },
-      { text: '折價券直接存入會員中心之券包，並以 Email 及 LINE 官方帳號通知。' },
+      { text: '完成各階段條件後，系統<b>即時自動核發</b>對應面額之優惠券，不另設審核程序。' },
+      { text: '優惠券直接存入會員中心之券包，並以 Email 及 LINE 官方帳號通知。' },
       { text: `每人累計發放上限為 ${toComma(CAMPAIGN.quota)} 元，達上限後不再發放。` }
     ]
   },
   {
     id: 'usage',
     no: '五',
-    title: '折價券使用規則',
+    title: '優惠券使用規則',
     items: [
-      { text: '折價券面額分為 <b>250 元</b>與 <b>500 元</b>兩種。' },
-      { text: `每次消費須達 <b>${CAMPAIGN.minSpend} 元</b>以上方可使用折價券折抵；500 元券亦適用相同門檻，不分級距。` },
-      { text: '折價券<b>不找零</b>。消費金額未達券面額者，差額不予退還；超過部分由消費者自行支付。' },
-      { text: '每次消費限使用一張折價券，不得合併使用。' },
-      { text: `折價券限於本活動<b>合作店家</b>（約 ${CAMPAIGN.storeCount} 家）使用，不得兌換現金或轉讓。` },
+      { text: '優惠券面額分為 <b>250 元</b>與 <b>500 元</b>兩種。' },
+      { text: `每次消費須達 <b>${CAMPAIGN.minSpend} 元</b>以上方可使用優惠券折抵；500 元券亦適用相同門檻，不分級距。` },
+      { text: '優惠券<b>不找零</b>。消費金額未達券面額者，差額不予退還；超過部分由消費者自行支付。' },
+      { text: '每次消費限使用一張優惠券，不得合併使用。' },
+      { text: `優惠券限於本活動<b>合作店家</b>（約 ${CAMPAIGN.storeCount} 家）使用，不得兌換現金或轉讓。` },
       {
         text: '使用方式：',
         subs: [
-          '結帳時向店家出示會員中心之折價券。',
+          '結帳時向店家出示會員中心之優惠券。',
           '由店家確認消費金額並完成折抵。',
           '店家端完成扣券後，該張券即標記為已使用。'
         ]
       },
-      { text: '折價券逾有效期限未使用者，視同放棄，不予補發。' }
+      { text: '優惠券逾有效期限未使用者，視同放棄，不予補發。' }
     ]
   },
   {
@@ -241,7 +246,7 @@ onMounted(() => {
           <!-- 頁尾行動 -->
           <div class="mt-4 rounded-card bg-paper-soft p-6 text-center sm:p-8">
             <h2 class="text-lg font-black sm:text-xl">看完了，出發吧</h2>
-            <p class="mt-1.5 text-sm text-ink-soft">走訪紅綠景點，最高帶走 {{ toComma(CAMPAIGN.quota) }} 元折價券。</p>
+            <p class="mt-1.5 text-sm text-ink-soft">走訪五條遊樂路線，最高帶走 {{ toComma(CAMPAIGN.quota) }} 元優惠券。</p>
             <div class="mt-5 flex flex-wrap justify-center gap-3">
               <UButton to="/register" color="primary" size="lg" icon="i-lucide-user-plus" class="rounded-full font-bold">
                 馬上參加
@@ -252,9 +257,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <p class="mt-6 text-xs leading-relaxed text-ink-faint">
-            本頁為介面示意，實際活動辦法以主辦單位正式公告為準。
-          </p>
         </article>
       </div>
     </div>
