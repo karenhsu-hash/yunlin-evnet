@@ -73,22 +73,22 @@ export const STORES: StoreRow[] = [
 export interface MemberRow {
   id: string
   name: string
-  phone: string
+  email: string
   identity: 'local' | 'visitor'
   stages: 0 | 1 | 2 | 3
   issued: number
   used: number
-  /** 一人一帳號控管：門號／身分證去重命中 */
+  /** 一人一帳號控管：信箱／身分證去重命中 */
   dupFlag: boolean
 }
 
 export const MEMBERS: MemberRow[] = [
-  { id: 'm1', name: '王＊雲', phone: '0912-***-678', identity: 'visitor', stages: 3, issued: 1000, used: 750, dupFlag: false },
-  { id: 'm2', name: '陳＊華', phone: '0933-***-201', identity: 'local', stages: 2, issued: 500, used: 500, dupFlag: false },
-  { id: 'm3', name: '林＊文', phone: '0955-***-843', identity: 'visitor', stages: 3, issued: 1000, used: 1000, dupFlag: false },
-  { id: 'm4', name: '黃＊婷', phone: '0987-***-115', identity: 'visitor', stages: 1, issued: 250, used: 0, dupFlag: true },
-  { id: 'm5', name: '張＊豪', phone: '0921-***-390', identity: 'local', stages: 0, issued: 0, used: 0, dupFlag: false },
-  { id: 'm6', name: '李＊芳', phone: '0966-***-724', identity: 'visitor', stages: 2, issued: 500, used: 250, dupFlag: false }
+  { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', stages: 3, issued: 1000, used: 750, dupFlag: false },
+  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', stages: 2, issued: 500, used: 500, dupFlag: false },
+  { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', stages: 3, issued: 1000, used: 1000, dupFlag: false },
+  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', stages: 1, issued: 250, used: 0, dupFlag: true },
+  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', stages: 0, issued: 0, used: 0, dupFlag: false },
+  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', stages: 2, issued: 500, used: 250, dupFlag: false }
 ]
 
 export function useAdmin() {

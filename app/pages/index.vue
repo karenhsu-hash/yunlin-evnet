@@ -173,12 +173,12 @@ const faqItems = [
             </span>
             <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開始累積你的優惠券</h2>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-              手機號碼驗證就能加入，馬上開始收集你的優惠券。
+              電子信箱驗證就能加入，馬上開始收集你的優惠券。
             </p>
 
             <ol class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
               <li
-                v-for="(t, i) in ['手機驗證', '填基本資料', '選擇身分']"
+                v-for="(t, i) in ['信箱驗證', '填基本資料', '選擇身分']"
                 :key="t"
                 class="flex items-center gap-1.5 text-xs font-bold text-ink-soft"
               >

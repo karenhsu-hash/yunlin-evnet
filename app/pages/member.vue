@@ -36,7 +36,7 @@ const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.coup
             </span>
             <div class="min-w-0">
               <h1 class="text-2xl font-black leading-tight sm:text-3xl">{{ member.name }}</h1>
-              <p class="text-xs text-white/70">{{ member.phone }}</p>
+              <p class="truncate text-xs text-white/70">{{ member.email }}</p>
               <div class="mt-2 flex flex-wrap items-center gap-1.5">
                 <span class="chip bg-white/20 text-white">
                   {{ member.identity === 'visitor' ? '外地旅客' : '雲林在地' }}

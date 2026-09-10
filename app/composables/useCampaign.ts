@@ -269,7 +269,7 @@ export function useCampaign() {
   /** 會員資料（示意） */
   const member = useState('member', () => ({
     name: '王小雲',
-    phone: '0912-345-678',
+    email: 'demo@example.com',
     /** local：在地　visitor：外地 */
     identity: 'visitor' as 'local' | 'visitor',
     lineBound: true,

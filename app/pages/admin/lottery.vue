@@ -26,7 +26,8 @@ const generated = ref(false)
 interface WinnerRow {
   no: number
   name: string
-  phone: string
+  /** 註冊時驗證過的信箱；註冊流程已不收手機，寄送前需另行索取聯絡電話 */
+  email: string
   identity: 'local' | 'visitor'
   stages: number
   prize: string
@@ -36,6 +37,7 @@ interface WinnerRow {
 const winners = ref<WinnerRow[]>([])
 
 const SURNAMES = ['王', '陳', '林', '黃', '張', '李', '吳', '劉', '蔡', '楊', '許', '鄭']
+const MAIL_HOSTS = ['gmail.com', 'yahoo.com.tw', 'hotmail.com', 'msn.com']
 const CITIES = ['台中市西屯區', '台北市大安區', '高雄市左營區', '雲林縣斗六市', '桃園市中壢區', '台南市東區']
 
 function generate() {
@@ -52,7 +54,7 @@ function generate() {
         rows.push({
           no,
           name: `${s}＊＊`,
-          phone: `09${String(11 + ((no * 7) % 78))}-***-${String(100 + ((no * 37) % 900))}`,
+          email: `${'abcdefghijk'[(no + i) % 11]}***${String(100 + ((no * 37) % 900))}@${MAIL_HOSTS[(no + i) % MAIL_HOSTS.length]}`,
           identity: isLocal ? 'local' : 'visitor',
           stages: 3 - ((no + i) % 2),
           prize: p.name,
@@ -69,9 +71,9 @@ function generate() {
 
 function exportWinners() {
   downloadCsv(`中獎名單_${week.value.label}.csv`, [
-    ['序號', '姓名', '手機', '身分', '完成段數', '獎項', '寄送地址'],
+    ['序號', '姓名', '信箱', '身分', '完成段數', '獎項', '寄送地址'],
     ...winners.value.map((w) => [
-      w.no, w.name, w.phone,
+      w.no, w.name, w.email,
       w.identity === 'local' ? '雲林在地' : '外地旅客',
       w.stages, w.prize, w.address
     ])
@@ -188,7 +190,7 @@ const physicalCount = computed(
               <tr class="border-b-2 border-paper-deep text-left text-ink-soft">
                 <th class="py-2 pr-3 font-bold">#</th>
                 <th class="py-2 pr-3 font-bold">姓名</th>
-                <th class="py-2 pr-3 font-bold">手機</th>
+                <th class="py-2 pr-3 font-bold">信箱</th>
                 <th class="py-2 pr-3 font-bold">身分</th>
                 <th class="py-2 pr-3 text-right font-bold">段數</th>
                 <th class="py-2 pr-3 font-bold">獎項</th>
@@ -199,7 +201,7 @@ const physicalCount = computed(
               <tr v-for="w in winners" :key="w.no" class="border-b border-paper-deep">
                 <td class="py-2 pr-3 tabular-nums text-ink-faint">{{ w.no }}</td>
                 <td class="py-2 pr-3 font-bold">{{ w.name }}</td>
-                <td class="py-2 pr-3 tabular-nums text-ink-soft">{{ w.phone }}</td>
+                <td class="py-2 pr-3 text-ink-soft">{{ w.email }}</td>
                 <td class="py-2 pr-3">
                   <span
                     class="chip"

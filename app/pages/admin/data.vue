@@ -32,9 +32,9 @@ const visibleSpots = computed(() => {
 
 function exportMembers() {
   downloadCsv('會員清單.csv', [
-    ['姓名', '手機', '身分', '完成段數', '發券金額', '已使用金額', '去重註記'],
+    ['姓名', '信箱', '身分', '完成段數', '發券金額', '已使用金額', '去重註記'],
     ...MEMBERS.map((m) => [
-      m.name, m.phone, m.identity === 'local' ? '雲林在地' : '外地旅客',
+      m.name, m.email, m.identity === 'local' ? '雲林在地' : '外地旅客',
       m.stages, m.issued, m.used, m.dupFlag ? '疑似重複' : ''
     ])
   ])
@@ -94,7 +94,7 @@ function exportStores() {
             <thead>
               <tr class="border-b-2 border-paper-deep text-left text-ink-soft">
                 <th class="py-2 pr-3 font-bold">姓名</th>
-                <th class="py-2 pr-3 font-bold">手機</th>
+                <th class="py-2 pr-3 font-bold">信箱</th>
                 <th class="py-2 pr-3 font-bold">身分</th>
                 <th class="py-2 pr-3 text-right font-bold">段數</th>
                 <th class="py-2 pr-3 text-right font-bold">發券</th>
@@ -105,7 +105,7 @@ function exportStores() {
             <tbody>
               <tr v-for="m in visibleMembers" :key="m.id" class="border-b border-paper-deep">
                 <td class="py-2 pr-3 font-bold">{{ m.name }}</td>
-                <td class="py-2 pr-3 tabular-nums text-ink-soft">{{ m.phone }}</td>
+                <td class="py-2 pr-3 text-ink-soft">{{ m.email }}</td>
                 <td class="py-2 pr-3">
                   <span
                     class="chip"
@@ -125,7 +125,7 @@ function exportStores() {
         </div>
 
         <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
-          一人一帳號控管：以門號與身分證字號去重，命中者標記為疑似重複並暫停發券，待人工複核。
+          一人一帳號控管：以電子信箱與身分證字號去重，命中者標記為疑似重複並暫停發券，待人工複核。
         </p>
       </div>
     </section>

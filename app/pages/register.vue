@@ -4,19 +4,27 @@ import type { RegisterStepKey } from '~/composables/useMember'
 const { member, login } = useCampaign()
 const {
   draft, addressInYunlin, identityMismatch,
-  phoneValid, otpValid, emailValid, idNoValid, profileValid
+  emailValid, codeValid, idNoValid, profileValid
 } = useMember()
 
-const step = ref<RegisterStepKey>('phone')
+const step = ref<RegisterStepKey>('email')
 const stepIndex = computed(() => REGISTER_STEPS.findIndex((s) => s.key === step.value))
 
-const otpSent = ref(false)
+/**
+ * 驗證碼是寄到「哪一個」信箱的。
+ * 只記布林值會有漏洞：寄給 A 之後把信箱改成 B，舊的已寄狀態與舊驗證碼仍留著，
+ * 使用者可以直接按下一步，等於 B 從來沒被驗證過。改成比對收件信箱，
+ * 信箱一改 codeSent 立刻變 false，驗證碼欄位收起、下一步也擋住。
+ */
+const codeSentTo = ref('')
+const codeSent = computed(() => !!codeSentTo.value && codeSentTo.value === normalizedEmail.value)
 const countdown = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
-function sendOtp() {
-  if (!phoneValid.value) return
-  otpSent.value = true
+/** 寄出信箱驗證碼；60 秒內不得重寄（以 session 為單位節流，避免改一個字就能重寄） */
+function sendCode() {
+  if (!emailValid.value || emailTaken.value) return
+  codeSentTo.value = normalizedEmail.value
   countdown.value = 60
   timer && clearInterval(timer)
   timer = setInterval(() => {
@@ -26,9 +34,14 @@ function sendOtp() {
 }
 onUnmounted(() => timer && clearInterval(timer))
 
-/** 一人一帳號控管：門號去重（示意，固定幾組視為已註冊） */
-const TAKEN_PHONES = ['0911-111-111', '0922-222-222']
-const phoneTaken = computed(() => TAKEN_PHONES.includes(draft.value.phone.trim()))
+/**
+ * 一人一帳號控管：信箱去重。
+ * 比對前一律轉小寫並去除前後空白 —— 信箱的 local part 理論上區分大小寫，
+ * 但實務上沒有服務這樣做，若不正規化，Abc@x.com 與 abc@x.com 會被當成兩個帳號。
+ */
+const TAKEN_EMAILS = ['taken@example.com', 'used@example.com']
+const normalizedEmail = computed(() => draft.value.email.trim().toLowerCase())
+const emailTaken = computed(() => TAKEN_EMAILS.includes(normalizedEmail.value))
 
 const lineBinding = ref(false)
 function bindLine() {
@@ -36,7 +49,7 @@ function bindLine() {
   setTimeout(() => {
     lineBinding.value = false
     member.value.name = draft.value.name || member.value.name
-    member.value.phone = draft.value.phone || member.value.phone
+    member.value.email = normalizedEmail.value || member.value.email
     member.value.identity = (draft.value.identity || 'visitor') as 'local' | 'visitor'
     member.value.lineBound = true
     login()
@@ -46,6 +59,7 @@ function bindLine() {
 
 function skipLine() {
   member.value.name = draft.value.name || member.value.name
+  member.value.email = normalizedEmail.value || member.value.email
   member.value.identity = (draft.value.identity || 'visitor') as 'local' | 'visitor'
   member.value.lineBound = false
   login()
@@ -53,13 +67,12 @@ function skipLine() {
 }
 
 function fillDemo() {
-  draft.value.phone = '0912-345-678'
-  draft.value.name = '王小雲'
   draft.value.email = 'demo@example.com'
+  draft.value.code = '123456'
+  draft.value.name = '王小雲'
   draft.value.address = '台中市西屯區台灣大道三段 99 號'
   draft.value.idNo = 'N123456789'
-  draft.value.otp = '123456'
-  otpSent.value = true
+  codeSentTo.value = 'demo@example.com'
 }
 </script>
 
@@ -69,7 +82,7 @@ function fillDemo() {
     <header class="text-center">
       <span class="chip bg-sky-100 text-sky-700">會員註冊</span>
       <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">加入捲動國旅</h1>
-      <p class="mt-2 text-sm text-ink-soft">完成註冊即可開始打卡任務，一支門號限一組帳號</p>
+      <p class="mt-2 text-sm text-ink-soft">完成註冊即可開始集章，一個信箱限一組帳號</p>
     </header>
 
     <!-- ── 步驟指示 ─────────────────────────────── -->
@@ -98,72 +111,78 @@ function fillDemo() {
       </li>
     </ol>
 
-    <!-- ── 步驟 1：手機驗證 ─────────────────────── -->
-    <section v-if="step === 'phone'" class="mt-6">
+    <!-- ── 步驟 1：信箱驗證 ─────────────────────── -->
+    <section v-if="step === 'email'" class="mt-6">
       <div class="card p-5 sm:p-7">
         <h2 class="flex items-center gap-2 text-lg font-black">
-          <UIcon name="i-lucide-smartphone" class="size-5 text-vermilion-500" />手機門號驗證
+          <UIcon name="i-lucide-mail" class="size-5 text-vermilion-500" />電子信箱驗證
         </h2>
-        <p class="mt-1 text-xs text-ink-soft">一支門號限一組帳號</p>
+        <p class="mt-1 text-xs text-ink-soft">一個信箱限一組帳號，之後也用這個信箱登入</p>
 
         <div class="mt-5">
-          <label class="text-xs font-bold text-ink-soft" for="phone">手機號碼</label>
+          <label class="text-xs font-bold text-ink-soft" for="email">電子信箱</label>
           <div class="mt-1.5 flex gap-2">
             <UInput
-              id="phone"
-              v-model="draft.phone"
-              type="tel"
-              placeholder="09xx-xxx-xxx"
+              id="email"
+              v-model="draft.email"
+              type="email"
+              autocomplete="email"
+              placeholder="name@example.com"
               size="xl"
               class="flex-1"
               :ui="{ base: 'font-bold' }"
             />
             <UButton
-              :color="phoneValid && !phoneTaken && countdown === 0 ? 'primary' : 'neutral'"
-              :variant="phoneValid && !phoneTaken && countdown === 0 ? 'solid' : 'soft'"
+              :color="emailValid && !emailTaken && countdown === 0 ? 'primary' : 'neutral'"
+              :variant="emailValid && !emailTaken && countdown === 0 ? 'solid' : 'soft'"
               size="xl"
-              :disabled="!phoneValid || phoneTaken || countdown > 0"
+              :disabled="!emailValid || emailTaken || countdown > 0"
               class="shrink-0 rounded-xl font-bold"
-              @click="sendOtp"
+              @click="sendCode"
             >
-              {{ countdown > 0 ? `${countdown}s` : otpSent ? '重寄' : '發送驗證碼' }}
+              {{ countdown > 0 ? `${countdown}s` : codeSent ? '重寄' : '寄送驗證碼' }}
             </UButton>
           </div>
 
-          <p v-if="draft.phone && !phoneValid" class="mt-2 text-xs font-bold text-vermilion-600">
-            手機格式不正確
+          <p v-if="draft.email && !emailValid" class="mt-2 text-xs font-bold text-vermilion-600">
+            信箱格式不正確
           </p>
           <UAlert
-            v-else-if="phoneTaken"
+            v-else-if="emailTaken"
             color="error"
             variant="soft"
             icon="i-lucide-triangle-alert"
-            title="此門號已註冊過"
-            description="請改用其他門號註冊。"
+            title="此信箱已註冊過"
+            description="請改用其他信箱註冊，或直接以此信箱登入。"
             class="mt-3"
           />
         </div>
 
-        <div v-if="otpSent && !phoneTaken" class="mt-5">
-          <label class="text-xs font-bold text-ink-soft" for="otp">簡訊驗證碼</label>
+        <div v-if="codeSent && !emailTaken" class="mt-5">
+          <label class="text-xs font-bold text-ink-soft" for="code">驗證碼</label>
           <UInput
-            id="otp"
-            v-model="draft.otp"
+            id="code"
+            v-model="draft.code"
             maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
             placeholder="6 位數字"
             size="xl"
             class="mt-1.5 w-full"
             :ui="{ base: 'text-lg font-black tracking-[0.4em]' }"
           />
-          <p class="mt-1.5 text-[11px] text-ink-faint">請輸入簡訊中的 6 位數驗證碼</p>
+          <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+            驗證碼已寄至 <b class="text-ink-soft">{{ draft.email }}</b>，請輸入信中的 6 位數字。<br>
+            沒收到請確認垃圾郵件匣，或於倒數結束後重寄。
+          </p>
         </div>
 
         <UButton
-          :color="otpValid && !phoneTaken ? 'primary' : 'neutral'"
-          :variant="otpValid && !phoneTaken ? 'solid' : 'soft'"
+          :color="codeValid && codeSent && !emailTaken ? 'primary' : 'neutral'"
+          :variant="codeValid && codeSent && !emailTaken ? 'solid' : 'soft'"
           size="xl"
           block
-          :disabled="!otpValid || phoneTaken"
+          :disabled="!codeValid || !codeSent || emailTaken"
           class="mt-6 rounded-full font-bold"
           @click="step = 'profile'"
         >驗證並繼續</UButton>
@@ -188,12 +207,18 @@ function fillDemo() {
             <UInput id="name" v-model="draft.name" placeholder="請填寫真實姓名" size="lg" class="mt-1.5 w-full" />
           </div>
 
+          <!-- 信箱在第一步就驗證過了，這裡只做確認，不再開放編輯 -->
           <div>
-            <label class="text-xs font-bold text-ink-soft" for="email">Email</label>
-            <UInput id="email" v-model="draft.email" type="email" placeholder="name@example.com" size="lg" class="mt-1.5 w-full" />
-            <p v-if="draft.email && !emailValid" class="mt-1 text-[11px] font-bold text-vermilion-600">
-              Email 格式不正確
-            </p>
+            <span class="text-xs font-bold text-ink-soft">電子信箱</span>
+            <div class="mt-1.5 flex items-center gap-2 rounded-xl bg-paper-soft px-3 py-2.5">
+              <UIcon name="i-lucide-badge-check" class="size-4 shrink-0 text-moss-600" />
+              <span class="min-w-0 flex-1 truncate text-sm font-bold">{{ draft.email }}</span>
+              <button
+                class="shrink-0 text-[11px] font-bold text-sky-600 underline underline-offset-2"
+                @click="step = 'email'"
+              >更改</button>
+            </div>
+            <p class="mt-1 text-[11px] text-ink-faint">已完成驗證</p>
           </div>
 
           <div class="sm:col-span-2">
@@ -220,7 +245,7 @@ function fillDemo() {
         </div>
 
         <div class="mt-6 flex gap-3">
-          <UButton color="neutral" variant="outline" size="lg" class="flex-1 rounded-full font-bold" @click="step = 'phone'">
+          <UButton color="neutral" variant="outline" size="lg" class="flex-1 rounded-full font-bold" @click="step = 'email'">
             上一步
           </UButton>
           <UButton

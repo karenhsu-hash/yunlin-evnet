@@ -3,19 +3,23 @@ const route = useRoute()
 const router = useRouter()
 const { login, member } = useCampaign()
 
-const phone = ref('')
-const otp = ref('')
-const otpSent = ref(false)
+const email = ref('')
+const code = ref('')
+/** 同註冊頁：記錄驗證碼寄給哪個信箱，信箱一改舊碼即失效 */
+const codeSentTo = ref('')
+const codeSent = computed(() => !!codeSentTo.value && codeSentTo.value === normalizedEmail.value)
 const countdown = ref(0)
 const submitting = ref(false)
 let timer: ReturnType<typeof setInterval> | null = null
 
-const phoneValid = computed(() => /^09\d{2}-?\d{3}-?\d{3}$/.test(phone.value.replace(/\s/g, '')))
-const otpValid = computed(() => otp.value.length === 6)
+/** 註冊時驗證過的信箱就是登入帳號；比對前正規化，避免大小寫造成登不進去 */
+const normalizedEmail = computed(() => email.value.trim().toLowerCase())
+const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail.value))
+const codeValid = computed(() => /^\d{6}$/.test(code.value))
 
-function sendOtp() {
-  if (!phoneValid.value) return
-  otpSent.value = true
+function sendCode() {
+  if (!emailValid.value) return
+  codeSentTo.value = normalizedEmail.value
   countdown.value = 60
   timer && clearInterval(timer)
   timer = setInterval(() => {
@@ -32,10 +36,10 @@ const redirect = computed(() =>
 )
 
 function submit() {
-  if (!otpValid.value) return
+  if (!codeValid.value || !codeSent.value) return
   submitting.value = true
   setTimeout(() => {
-    if (phone.value) member.value.phone = phone.value
+    if (normalizedEmail.value) member.value.email = normalizedEmail.value
     login()
     submitting.value = false
     router.push(redirect.value)
@@ -61,51 +65,57 @@ function demoLogin() {
       </header>
 
       <div class="mt-7 card p-5 sm:p-7">
-        <label class="text-xs font-bold text-ink-soft" for="phone">手機號碼</label>
+        <label class="text-xs font-bold text-ink-soft" for="email">電子信箱</label>
         <div class="mt-1.5 flex gap-2">
           <UInput
-            id="phone"
-            v-model="phone"
-            type="tel"
-            placeholder="09xx-xxx-xxx"
+            id="email"
+            v-model="email"
+            type="email"
+            autocomplete="email"
+            placeholder="name@example.com"
             size="xl"
             class="flex-1"
             :ui="{ base: 'font-bold' }"
           />
           <UButton
-            :color="phoneValid && countdown === 0 ? 'primary' : 'neutral'"
-            :variant="phoneValid && countdown === 0 ? 'solid' : 'soft'"
+            :color="emailValid && countdown === 0 ? 'primary' : 'neutral'"
+            :variant="emailValid && countdown === 0 ? 'solid' : 'soft'"
             size="xl"
-            :disabled="!phoneValid || countdown > 0"
+            :disabled="!emailValid || countdown > 0"
             class="shrink-0 rounded-xl font-bold"
-            @click="sendOtp"
-          >{{ countdown > 0 ? `${countdown}s` : otpSent ? '重寄' : '發送驗證碼' }}</UButton>
+            @click="sendCode"
+          >{{ countdown > 0 ? `${countdown}s` : codeSent ? '重寄' : '寄送驗證碼' }}</UButton>
         </div>
-        <p v-if="phone && !phoneValid" class="mt-2 text-xs font-bold text-vermilion-600">
-          手機格式不正確
+        <p v-if="email && !emailValid" class="mt-2 text-xs font-bold text-vermilion-600">
+          信箱格式不正確
         </p>
 
-        <div v-if="otpSent" class="mt-5">
-          <label class="text-xs font-bold text-ink-soft" for="otp">簡訊驗證碼</label>
+        <div v-if="codeSent" class="mt-5">
+          <label class="text-xs font-bold text-ink-soft" for="code">驗證碼</label>
           <UInput
-            id="otp"
-            v-model="otp"
+            id="code"
+            v-model="code"
             maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
             placeholder="6 位數字"
             size="xl"
             class="mt-1.5 w-full"
             :ui="{ base: 'text-lg font-black tracking-[0.4em]' }"
           />
-          <p class="mt-1.5 text-[11px] text-ink-faint">請輸入簡訊中的 6 位數驗證碼</p>
+          <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+            驗證碼已寄至 <b class="text-ink-soft">{{ normalizedEmail }}</b>，請輸入信中的 6 位數字。<br>
+            沒收到請確認垃圾郵件匣。
+          </p>
         </div>
 
         <UButton
-          :color="otpValid ? 'primary' : 'neutral'"
-          :variant="otpValid ? 'solid' : 'soft'"
+          :color="codeValid && codeSent ? 'primary' : 'neutral'"
+          :variant="codeValid && codeSent ? 'solid' : 'soft'"
           size="xl"
           block
           :loading="submitting"
-          :disabled="!otpValid"
+          :disabled="!codeValid || !codeSent"
           class="mt-6 rounded-full font-bold"
           @click="submit"
         >登入</UButton>

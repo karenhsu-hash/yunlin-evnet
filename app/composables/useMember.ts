@@ -4,10 +4,11 @@
  */
 
 export interface RegisterDraft {
-  phone: string
-  otp: string
-  name: string
+  /** 註冊識別用：驗證信箱取代原本的手機門號 */
   email: string
+  /** 寄到信箱的 6 位數驗證碼 */
+  code: string
+  name: string
   address: string
   idNo: string
   /** 註冊時強制選擇，並以通訊地址交叉判別 */
@@ -34,7 +35,7 @@ export interface LotteryRecord {
 
 /** 註冊流程的步驟定義 */
 export const REGISTER_STEPS = [
-  { key: 'phone', label: '手機驗證', icon: 'i-lucide-smartphone' },
+  { key: 'email', label: '信箱驗證', icon: 'i-lucide-mail' },
   { key: 'profile', label: '基本資料', icon: 'i-lucide-clipboard-pen' },
   { key: 'identity', label: '身分選擇', icon: 'i-lucide-compass' },
   { key: 'line', label: '綁定 LINE', icon: 'i-lucide-message-circle' }
@@ -52,10 +53,9 @@ export const YUNLIN_TOWNS = [
 
 export function useMember() {
   const draft = useState<RegisterDraft>('registerDraft', () => ({
-    phone: '',
-    otp: '',
-    name: '',
     email: '',
+    code: '',
+    name: '',
     address: '',
     idNo: '',
     identity: '',
@@ -78,12 +78,12 @@ export function useMember() {
     )
   })
 
-  const phoneValid = computed(() => /^09\d{2}-?\d{3}-?\d{3}$/.test(draft.value.phone.replace(/\s/g, '')))
-  const otpValid = computed(() => draft.value.otp.length === 6)
   const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.value.email))
+  const codeValid = computed(() => /^\d{6}$/.test(draft.value.code))
   const idNoValid = computed(() => /^[A-Za-z][12]\d{8}$/.test(draft.value.idNo))
+  /** 信箱已在第一步驗證過，基本資料這步只檢查姓名、地址與身分證 */
   const profileValid = computed(
-    () => draft.value.name.trim().length >= 2 && emailValid.value && draft.value.address.trim().length >= 6 && idNoValid.value
+    () => draft.value.name.trim().length >= 2 && draft.value.address.trim().length >= 6 && idNoValid.value
   )
 
   /** 會員中心：核銷紀錄 */
@@ -101,7 +101,7 @@ export function useMember() {
 
   function resetDraft() {
     draft.value = {
-      phone: '', otp: '', name: '', email: '', address: '', idNo: '', identity: '', agreed: false
+      email: '', code: '', name: '', address: '', idNo: '', identity: '', agreed: false
     }
   }
 
@@ -109,9 +109,8 @@ export function useMember() {
     draft,
     addressInYunlin,
     identityMismatch,
-    phoneValid,
-    otpValid,
     emailValid,
+    codeValid,
     idNoValid,
     profileValid,
     redeemRecords,
