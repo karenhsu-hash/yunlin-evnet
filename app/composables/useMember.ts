@@ -1,5 +1,5 @@
 /**
- * 會員系統 —— 註冊流程、LINE 綁定、會員中心紀錄。
+ * 會員系統 —— 註冊流程、LINE 綁定、旅遊護照紀錄。
  * 一樣是示意用假資料層，之後替換讀寫來源即可。
  */
 
@@ -86,13 +86,13 @@ export function useMember() {
     () => draft.value.name.trim().length >= 2 && draft.value.address.trim().length >= 6 && idNoValid.value
   )
 
-  /** 會員中心：核銷紀錄 */
+  /** 旅遊護照：核銷紀錄 */
   const redeemRecords = useState<RedeemRecord[]>('redeemRecords', () => [
     { id: 'rr1', store: '北港圓仔湯老店', town: '北港鎮', couponValue: 250, spend: 420, at: '2026.09.20 14:51' },
     { id: 'rr2', store: '西螺丸莊醬油', town: '西螺鎮', couponValue: 250, spend: 680, at: '2026.09.14 11:08' }
   ])
 
-  /** 會員中心：抽獎紀錄 */
+  /** 旅遊護照：抽獎紀錄 */
   const lotteryRecords = useState<LotteryRecord[]>('lotteryRecords', () => [
     { id: 'lr1', week: '第 3 週', entries: 3, result: 'won', prize: '雲林良品禮盒' },
     { id: 'lr2', week: '第 2 週', entries: 3, result: 'lost' },

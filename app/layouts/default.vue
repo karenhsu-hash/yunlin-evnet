@@ -59,7 +59,7 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
               size="sm"
               icon="i-lucide-circle-user-round"
               class="hidden md:inline-flex rounded-full font-bold text-white hover:bg-white/10"
-            >會員中心</UButton>
+            >我的護照</UButton>
             <UButton
               color="neutral"
               variant="ghost"
@@ -107,7 +107,7 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
 
           <template v-if="isLoggedIn">
             <NuxtLink to="/member" class="flex items-center gap-3 rounded-2xl px-3 py-3 font-bold text-ink-soft">
-              <UIcon name="i-lucide-circle-user-round" class="size-5" />會員中心
+              <UIcon name="i-lucide-book-marked" class="size-5" />我的護照
             </NuxtLink>
             <button class="flex items-center gap-3 rounded-2xl px-3 py-3 text-left font-bold text-ink-faint" @click="logout">
               <UIcon name="i-lucide-log-out" class="size-5" />登出
