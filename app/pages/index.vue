@@ -16,41 +16,41 @@ const spotOf = (id: string) => ALL_SPOTS.find((s) => s.id === id)
 /** 形象展示：本案的三個主張 */
 const brandPoints = [
   {
-    icon: 'i-lucide-mountain-snow',
+    art: '/images/art/temple.webp',
     title: '走進雲林的日常',
     desc: `從北港廟口的香火、西螺老街的醬油香，到古坑山上的咖啡園與濁水溪出海口的落日 —— ${ALL_SPOTS.length} 個亮點串成一條可以慢慢走的路線。`
   },
   {
-    icon: 'i-lucide-hand-coins',
+    art: '/images/art/veggie-basket.webp',
     title: '把消費留在在地',
     desc: '券只能在雲林的店家使用。你吃的那碗麵、帶走的那罐醬油，都留在這片土地上。'
   },
   {
-    icon: 'i-lucide-route',
+    art: '/images/art/car-family.webp',
     title: '走得越深，拿得越多',
-    desc: `解任務越多，能兌換的優惠價值越高。完成所有指定打卡任務，累積最高 ${toComma(CAMPAIGN.quota)} 點。`
+    desc: '完成越多任務、累積越多點數，就能逐步升級並解鎖更多優惠。兌換優惠不影響已取得的會員等級。'
   }
 ]
 
-/** 怎麼玩：自動輪播的三個步驟，對應三個會員等級 */
+/** 怎麼玩：自動輪播的三個步驟 */
 const steps = [
   {
     key: 'join',
-    icon: 'i-lucide-book-marked',
-    title: `註冊領 ${LEVELS[0]!.reward} 點`,
-    desc: '完成會員註冊就開通觀光護照，成為啟程會員。'
+    art: LEVELS[0]!.art,
+    title: `註冊領 ${CAMPAIGN.signupBonus} 點`,
+    desc: '完成會員註冊就開通觀光護照，直接成為等級一。'
   },
   {
     key: 'stamp',
-    icon: 'i-lucide-stamp',
-    title: '打卡升級',
-    desc: '到站點現場掃碼或定位蓋章，蓋得越多、等級越高、點數越多。'
+    art: LEVELS[1]!.art,
+    title: '完成任務得點數',
+    desc: '到站點現場掃碼或定位蓋章，每個任務依難度可得 100～500 點。'
   },
   {
     key: 'redeem',
-    icon: 'i-lucide-gift',
-    title: '點數兌換優惠',
-    desc: '在護照的兌換專區用點數換優惠券，到合作店家直接折抵。'
+    art: '/images/art/seafood-plate.webp',
+    title: '升級兌換優惠',
+    desc: '累積點數達門檻自動升級，在兌換專區換該等級的專屬優惠。'
   }
 ]
 
@@ -82,7 +82,7 @@ const faqItems = [
   { label: '優惠券怎麼用？', content: '到指定店家出示優惠券即可兌換。' },
   {
     label: '點數怎麼拿？',
-    content: `註冊即得 ${LEVELS[0]!.reward} 點；任意 ${LEVEL_TWO_CHECKINS} 站打卡升級為${LEVELS[1]!.name}，再得 ${LEVELS[1]!.reward} 點；首推路線 ${DESIGNATED_SPOT_IDS.length} 個指定站全部打卡升級為${LEVELS[2]!.name}，再得 ${LEVELS[2]!.reward} 點，最高累積 ${toComma(CAMPAIGN.quota)} 點。`
+    content: `註冊即得 ${CAMPAIGN.signupBonus} 點；之後每完成一個任務（到站點打卡），依難度可得 100～500 點。累積達 ${LEVELS.map((l) => toComma(l.threshold)).join('／')} 點分別升級為等級一、二、三，最高累積 ${toComma(CAMPAIGN.quota)} 點，達上限後打卡不再加點。`
   },
   {
     label: '點數怎麼用？',
@@ -145,7 +145,7 @@ const faqItems = [
       </h1>
 
       <p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base">
-        走訪雲林各地亮點，完成旅遊護照任務，
+        走訪雲林各地亮點，完成觀光護照任務，
         <b class="text-vermilion-600">沿途集章解鎖優惠</b>，在合作店家直接兌換。
       </p>
 
@@ -175,29 +175,29 @@ const faqItems = [
         <div class="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10">
           <div>
             <span class="chip bg-vermilion-100 text-vermilion-700">
-              <UIcon name="i-lucide-user-plus" class="size-3.5" />三步驟開始
+              <UIcon name="i-lucide-book-marked" class="size-3.5" />觀光護照
             </span>
-            <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開始累積你的優惠券</h2>
+            <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開啟你的觀光護照</h2>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-              電子信箱驗證就能加入，馬上開始收集你的優惠券。
+              註冊成為會員，即可獲得 {{ CAMPAIGN.signupBonus }} 點並開啟觀光護照。
+              完成越多任務、累積越多點數，就能逐步升級並解鎖更多優惠。
             </p>
 
-            <ol class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-              <li
-                v-for="(t, i) in ['信箱驗證', '填基本資料', '選擇身分']"
-                :key="t"
-                class="flex items-center gap-1.5 text-xs font-bold text-ink-soft"
-              >
-                <span class="grid place-items-center size-5 rounded-full bg-paper-soft text-[10px] font-black text-ink">
-                  {{ i + 1 }}
-                </span>{{ t }}
-              </li>
+            <!-- 護照的三個等級門檻：一眼看懂點數怎麼長上去，完整規則在下方「觀光護照玩法」 -->
+            <ol class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
+              <template v-for="(l, i) in LEVELS" :key="l.level">
+                <UIcon v-if="i > 0" name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-ink-faint" />
+                <li class="flex items-center gap-1.5 rounded-full bg-paper-soft px-3 py-1.5 text-xs font-bold text-ink-soft">
+                  {{ l.name }}
+                  <span class="font-black text-marigold-700">{{ toComma(l.threshold) }} 點</span>
+                </li>
+              </template>
             </ol>
           </div>
 
           <div class="flex flex-wrap gap-3 lg:flex-col">
             <UButton to="/register" color="primary" size="xl" icon="i-lucide-user-plus" class="rounded-full font-bold">
-              免費註冊
+              免費註冊，領 {{ CAMPAIGN.signupBonus }} 點
             </UButton>
             <UButton to="/login" color="neutral" variant="outline" size="xl" icon="i-lucide-log-in" class="rounded-full font-bold">
               我已有帳號
@@ -219,15 +219,14 @@ const faqItems = [
           { k: '最高累積', v: `${toComma(CAMPAIGN.quota)} 點` }
         ]" :key="s.k" class="px-3 text-center">
           <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
-          <dd class="mt-1 text-2xl font-black text-ink sm:text-3xl">{{ s.v }}</dd>
+          <!-- 手機一欄只有 110px 左右，「1,000 點」在 text-2xl 會斷成兩行，縮一級並禁止換行 -->
+          <dd class="mt-1 whitespace-nowrap text-xl font-black text-ink sm:text-3xl">{{ s.v }}</dd>
         </div>
       </dl>
 
       <div class="mt-4 grid gap-4 md:grid-cols-3">
         <article v-for="b in brandPoints" :key="b.title" class="card p-5 sm:p-6">
-          <span class="grid place-items-center size-12 rounded-2xl bg-indigoink-50 text-indigoink-600">
-            <UIcon :name="b.icon" class="size-6" />
-          </span>
+          <img :src="b.art" alt="" loading="lazy" class="h-16 w-auto object-contain sm:h-20">
           <h3 class="mt-3.5 text-lg font-black">{{ b.title }}</h3>
           <p class="mt-2 text-sm leading-relaxed text-ink-soft">{{ b.desc }}</p>
         </article>
@@ -244,7 +243,7 @@ const faqItems = [
         @mouseleave="paused = false"
       >
         <!-- 由左至右推進的連接線（桌機） -->
-        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-10 hidden px-[16.6%] md:block">
+        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-12 hidden px-[16.6%] md:block">
           <div class="h-1 rounded-full bg-paper-deep">
             <div
               class="h-full rounded-full bg-vermilion-500 transition-[width] duration-700 ease-out"
@@ -257,10 +256,16 @@ const faqItems = [
           <li v-for="(s, i) in steps" :key="s.key">
             <button class="flex w-full flex-col items-center text-center" @click="goStep(i)">
               <span
-                class="relative grid size-20 place-items-center rounded-full border-4 bg-white transition-colors duration-500"
-                :class="active >= i ? 'border-vermilion-500 text-vermilion-600' : 'border-paper-deep text-ink-faint'"
+                class="relative grid size-24 place-items-center rounded-full border-4 bg-white transition-colors duration-500"
+                :class="active >= i ? 'border-vermilion-500' : 'border-paper-deep'"
               >
-                <UIcon :name="s.icon" class="size-9" />
+                <img
+                  :src="s.art"
+                  alt=""
+                  loading="lazy"
+                  class="size-16 object-contain transition duration-500"
+                  :class="active >= i ? '' : 'opacity-40 grayscale'"
+                >
                 <span
                   class="absolute -bottom-2 grid size-6 place-items-center rounded-full text-[11px] font-black transition-colors duration-500"
                   :class="active >= i ? 'bg-vermilion-500 text-white' : 'bg-paper-deep text-ink-faint'"
@@ -278,45 +283,48 @@ const faqItems = [
       </div>
     </section>
 
-    <!-- ══ 會員等級：客戶提供的等級表 ＋ 簡短版文案 ═══ -->
+    <!-- ══ 觀光護照玩法：客戶 2026-09 修訂版的文案與等級表 ═══ -->
     <section class="container-page pt-12 sm:pt-16">
-      <SectionHead title="會員等級" sub="會員等級將依任務完成進度提升，不同等級可獲得對應的點數獎勵，並使用點數兌換優惠。" />
+      <SectionHead title="觀光護照玩法" />
+      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-soft sm:text-base">
+        依序完成觀光護照任務，即可獲得點數。每個任務依難度不同，可獲得 100～500 點。
+        累積點數達到指定門檻後，會員等級會自動提升，並可兌換該等級對應的專屬優惠。
+      </p>
 
-      <!-- 手機上五欄放不下，讓表格自己橫向捲動，頁面本身不溢出 -->
-      <div class="mt-5 overflow-x-auto rounded-card bg-white shadow-card">
-        <table class="w-full min-w-[640px] text-left text-sm">
+      <!-- 客戶的表只有兩欄，手機也放得下，不必另做卡片版 -->
+      <div class="mt-5 overflow-hidden rounded-card bg-white shadow-card">
+        <table class="w-full text-left text-sm">
           <thead>
             <tr class="border-b-2 border-paper-deep text-xs text-ink-faint">
-              <th class="px-5 py-3 font-bold">會員等級</th>
-              <th class="px-5 py-3 font-bold">升級條件</th>
-              <th class="px-5 py-3 text-right font-bold">點數獎勵</th>
-              <th class="px-5 py-3 text-right font-bold">累積可用點數</th>
-              <th class="px-5 py-3 text-right font-bold">可兌換優惠價值</th>
+              <th class="px-4 py-3 font-bold sm:px-6">會員等級</th>
+              <th class="px-4 py-3 text-right font-bold sm:px-6">累積點數</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-paper-deep">
             <tr v-for="l in LEVELS" :key="l.level">
-              <td class="px-5 py-3.5">
-                <span class="text-xs font-bold text-ink-faint">等級{{ ['一', '二', '三'][l.level - 1] }}｜</span>
-                <b>{{ l.name }}</b>
+              <td class="px-4 py-3 sm:px-6">
+                <span class="flex items-center gap-3">
+                  <img :src="l.art" alt="" loading="lazy" class="h-10 w-14 shrink-0 object-contain">
+                  <span>
+                    <span class="block text-xs font-bold text-ink-faint">等級{{ ['一', '二', '三'][l.level - 1] }}</span>
+                    <b class="whitespace-nowrap">{{ l.name }}</b>
+                  </span>
+                </span>
               </td>
-              <td class="px-5 py-3.5 text-ink-soft">{{ l.condition }}</td>
-              <td class="px-5 py-3.5 text-right tabular-nums">{{ l.level === 1 ? '' : '再獲得 ' }}{{ l.reward }} 點</td>
-              <td class="px-5 py-3.5 text-right font-bold tabular-nums">{{ toComma(l.total) }} 點</td>
-              <td class="px-5 py-3.5 text-right font-black tabular-nums text-marigold-700">最高 {{ toComma(l.total) }} 點</td>
+              <td class="px-4 py-3 text-right text-base font-black tabular-nums text-marigold-700 sm:px-6">
+                {{ toComma(l.threshold) }} 點
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <p class="mt-4 text-sm leading-relaxed text-ink-soft">
-        註冊成為會員，即可獲得 {{ LEVELS[0]!.reward }} 點並開啟觀光護照。完成兩個行程打卡任務，可升級至等級二並累積
-        {{ LEVELS[1]!.total }} 點；完成所有指定打卡任務，即可升級至等級三，累積最高 {{ toComma(LEVELS[2]!.total) }} 點。
-        會員可使用點數兌換各等級專屬優惠，解任務越多，能兌換的優惠價值越高。
+        完成越多任務、累積越多點數，就能逐步升級並解鎖更多優惠。兌換優惠不影響已取得的會員等級。
       </p>
       <p class="mt-2 flex items-start gap-1.5 text-xs text-ink-faint">
-        <UIcon name="i-lucide-flag" class="mt-px size-3.5 shrink-0 text-vermilion-500" />
-        指定打卡任務為首推路線「{{ (ROUTES.find((r) => r.featured) ?? ROUTES[0]!).name }}」的 {{ DESIGNATED_SPOT_IDS.length }} 個站點。
+        <UIcon name="i-lucide-info" class="mt-px size-3.5 shrink-0" />
+        註冊即送 {{ CAMPAIGN.signupBonus }} 點（直接達等級一）；累積點數上限 {{ toComma(CAMPAIGN.quota) }} 點，達上限後打卡不再加點。
       </p>
     </section>
 
@@ -354,15 +362,18 @@ const faqItems = [
 
       <!-- 選中路線的行程動線 -->
       <div :key="currentRoute.id" class="card mt-4 p-5 animate-pop-in sm:p-6">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div class="min-w-0">
-            <h3 class="text-lg font-black sm:text-xl">{{ currentRoute.name }}</h3>
-            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ currentRoute.tagline }}</p>
+        <div class="flex items-start gap-4">
+          <img :src="currentRoute.art" alt="" class="h-16 w-20 shrink-0 object-contain sm:h-20 sm:w-28">
+          <div class="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="text-lg font-black sm:text-xl">{{ currentRoute.name }}</h3>
+              <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ currentRoute.tagline }}</p>
+            </div>
+            <span class="chip shrink-0 bg-marigold-100 text-marigold-700">
+              <UIcon name="i-lucide-award" class="size-3.5" />
+              完成解鎖 ‧ {{ currentRoute.achievement }}
+            </span>
           </div>
-          <span class="chip shrink-0 bg-marigold-100 text-marigold-700">
-            <UIcon name="i-lucide-award" class="size-3.5" />
-            完成解鎖 ‧ {{ currentRoute.achievement }}
-          </span>
         </div>
 
         <div class="mt-5 space-y-4">
@@ -380,10 +391,11 @@ const faqItems = [
                       : 'border-paper-deep bg-white text-ink hover:border-ink/40'"
                   >
                     <UIcon
-                      :name="checkedIn.includes(id) ? 'i-lucide-check' : isDesignated(id) ? 'i-lucide-flag' : spotOf(id)!.icon"
+                      :name="checkedIn.includes(id) ? 'i-lucide-check' : spotOf(id)!.icon"
                       class="size-3.5 shrink-0"
                     />
                     {{ spotOf(id)?.name }}
+                    <span class="text-[10px] font-black text-marigold-700">+{{ spotOf(id)?.points }}</span>
                   </NuxtLink>
                 </li>
               </template>
@@ -393,12 +405,12 @@ const faqItems = [
 
         <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-paper-deep pt-4">
           <span class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft">
-            <UIcon name="i-lucide-flag" class="size-3.5 text-vermilion-500" />
-            {{ LEVELS[2]!.name }}指定站
+            <UIcon name="i-lucide-coins" class="size-3.5 text-marigold-600" />
+            站名旁為該站任務點數
           </span>
           <NuxtLink
             to="/events"
-            class="group ml-auto flex items-center gap-0.5 text-xs font-bold text-sky-600 sm:text-sm"
+            class="group -my-2 ml-auto flex items-center gap-0.5 py-2 text-xs font-bold text-sky-600 sm:text-sm"
           >
             在地圖上看這條路線
             <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -459,8 +471,11 @@ const faqItems = [
         to="/stores"
         class="card group flex flex-col items-start gap-4 p-6 transition-shadow hover:shadow-pop sm:flex-row sm:items-center sm:p-8"
       >
-        <span class="grid place-items-center size-14 shrink-0 rounded-2xl bg-clay-100 text-clay-600">
-          <UIcon name="i-lucide-store" class="size-7" />
+        <!-- 三道在地吃食疊在一起，比單一店舖圖示更像「去吃喝」 -->
+        <span aria-hidden="true" class="flex shrink-0 items-end -space-x-4">
+          <img src="/images/art/seafood-plate.webp" alt="" loading="lazy" class="h-14 w-auto sm:h-16">
+          <img src="/images/art/coffee.webp" alt="" loading="lazy" class="relative h-12 w-auto sm:h-14">
+          <img src="/images/art/veggie-basket.webp" alt="" loading="lazy" class="h-12 w-auto sm:h-14">
         </span>
         <div class="min-w-0 flex-1">
           <h2 class="text-xl font-black">帶著券去吃喝</h2>

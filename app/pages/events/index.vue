@@ -2,10 +2,11 @@
 /**
  * 活動景點 —— 以「遊樂路線」為主結構。
  *
- * 旅客的心智模型是「今天走哪一條」，所以頁籤是路線。站點不再分類型；
- * 唯一需要標出來的是等級三的指定站（圖釘外加旗標），讓人知道升級要蓋哪幾站。
+ * 旅客的心智模型是「今天走哪一條」，所以頁籤是路線。每一站是一個任務，
+ * 站點卡與路線膠囊上標出任務點數，讓人挑下一站時知道值多少。
  *
  * 路線只是建議動線，不綁定走訪順序 —— 強制順序會被 GPS 誤差與臨時改行程打爆。
+ * 客戶文案裡的「依序完成」保留為語氣，不做成硬性規則（2026-09 確認）。
  */
 const { isCheckedIn, routeProgress } = useCampaign()
 
@@ -18,7 +19,8 @@ const todoOnly = ref(false)
 
 /** 目前路線的站點，照行程順序排；未選路線時是全部站點 */
 const routeSpots = computed(() => {
-  if (!activeRoute.value) return ALL_SPOTS
+  // 未選路線時清單標示「依距離排序」，要真的排；ALL_SPOTS 本身是資料建檔順序
+  if (!activeRoute.value) return [...ALL_SPOTS].sort((a, b) => a.distanceKm - b.distanceKm)
   const ids = routeSpotIds(activeRoute.value)
   return ALL_SPOTS.filter((s) => ids.includes(s.id)).sort(
     (a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)
@@ -106,14 +108,17 @@ watch(activeRouteId, () => {
 
       <!-- 選中路線的介紹與行程 -->
       <div v-if="activeRoute" class="mt-4 card p-5 animate-pop-in sm:p-6">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div class="min-w-0">
-            <h2 class="text-lg font-black sm:text-xl">{{ activeRoute.name }}</h2>
-            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ activeRoute.tagline }}</p>
-          </div>
-          <div class="shrink-0 text-right">
-            <p class="text-[11px] font-bold text-ink-faint">完成解鎖</p>
-            <p class="text-sm font-black text-marigold-700">{{ activeRoute.achievement }}</p>
+        <div class="flex items-start gap-4">
+          <img :src="activeRoute.art" alt="" class="h-16 w-20 shrink-0 object-contain sm:h-20 sm:w-28">
+          <div class="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="text-lg font-black sm:text-xl">{{ activeRoute.name }}</h2>
+              <p class="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">{{ activeRoute.tagline }}</p>
+            </div>
+            <div class="shrink-0 text-right">
+              <p class="text-[11px] font-bold text-ink-faint">完成解鎖</p>
+              <p class="text-sm font-black text-marigold-700">{{ activeRoute.achievement }}</p>
+            </div>
           </div>
         </div>
 
@@ -133,10 +138,11 @@ watch(activeRouteId, () => {
                     @click="activePin = activePin === id ? null : id"
                   >
                     <UIcon
-                      :name="isCheckedIn(id) ? 'i-lucide-check' : isDesignated(id) ? 'i-lucide-flag' : spotOf(id)!.icon"
+                      :name="isCheckedIn(id) ? 'i-lucide-check' : spotOf(id)!.icon"
                       class="size-3.5 shrink-0"
                     />
                     {{ spotOf(id)?.name }}
+                    <span class="text-[10px] font-black text-marigold-700">+{{ spotOf(id)?.points }}</span>
                   </button>
                 </li>
               </template>
@@ -161,7 +167,9 @@ watch(activeRouteId, () => {
 
     <!-- ── 地圖 + 清單 ──────────────────────────── -->
     <section class="container-page py-6 sm:py-8">
-      <div class="grid gap-6 lg:grid-cols-5 lg:gap-8">
+      <!-- grid-cols-1（＝minmax(0,1fr)）不能省：SpotCard 的 truncate 文字最小寬度是整句長，
+           沒指定欄寬時單欄軌道會被它撐開，360px 手機上整頁溢出 24px -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
         <!-- 地圖 -->
         <div class="lg:col-span-3">
           <div class="lg:sticky lg:top-24">
@@ -186,16 +194,15 @@ watch(activeRouteId, () => {
                 :aria-label="spot.name"
                 @click="activePin = activePin === spot.id ? null : spot.id"
               >
-                <!-- 指定站用主色＋旗標，一般站點用靛藍；顏色之外還有圖示與圖例，不單靠顏色辨識 -->
+                <!-- 還沒蓋的用主色＋脈動，蓋過的轉綠並換成勾勾；顏色之外還有圖示與圖例，不單靠顏色辨識 -->
                 <span
                   v-if="!isCheckedIn(spot.id)"
-                  class="absolute size-7 rounded-full animate-ping-ring"
-                  :class="isDesignated(spot.id) ? 'bg-vermilion-500' : 'bg-indigoink-500'"
+                  class="absolute size-7 rounded-full bg-vermilion-500 animate-ping-ring"
                 />
                 <span
                   class="relative grid place-items-center size-9 rounded-full border-2 border-white text-white shadow-card"
                   :class="[
-                    isDesignated(spot.id) ? 'bg-vermilion-500' : 'bg-indigoink-500',
+                    isCheckedIn(spot.id) ? 'bg-moss-500' : 'bg-vermilion-500',
                     activePin === spot.id ? 'ring-4 ring-white/70 scale-110' : ''
                   ]"
                 >
@@ -205,7 +212,7 @@ watch(activeRouteId, () => {
                   </span>
                   <UIcon
                     v-else
-                    :name="isCheckedIn(spot.id) ? 'i-lucide-check' : isDesignated(spot.id) ? 'i-lucide-flag' : spot.icon"
+                    :name="isCheckedIn(spot.id) ? 'i-lucide-check' : spot.icon"
                     class="size-4.5"
                   />
                 </span>
@@ -213,10 +220,10 @@ watch(activeRouteId, () => {
 
               <div class="absolute bottom-3 left-3 flex flex-col gap-1 rounded-2xl bg-white/85 px-3 py-2 backdrop-blur">
                 <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
-                  <i class="size-2.5 rounded-full bg-vermilion-500 not-italic" />{{ LEVELS[2]!.name }}指定站
+                  <i class="size-2.5 rounded-full bg-vermilion-500 not-italic" />尚未蓋章
                 </span>
                 <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
-                  <i class="size-2.5 rounded-full bg-indigoink-500 not-italic" />一般站點
+                  <i class="size-2.5 rounded-full bg-moss-500 not-italic" />已蓋章
                 </span>
               </div>
             </div>
@@ -238,7 +245,7 @@ watch(activeRouteId, () => {
               {{ activeRoute ? '本路線站點' : '站點清單' }}
             </h2>
             <button
-              class="flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors"
+              class="flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-colors"
               :class="todoOnly ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
               @click="todoOnly = !todoOnly"
             >
@@ -256,7 +263,7 @@ watch(activeRouteId, () => {
               v-if="!visibleSpots.length"
               class="rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
             >
-              <UIcon name="i-lucide-party-popper" class="size-8 text-marigold-500" />
+              <img :src="LEVELS[2]!.art" alt="" class="mx-auto h-20 w-auto object-contain">
               <p class="mt-2 text-sm text-ink-soft">
                 {{ activeRoute ? '這條路線的章都蓋滿了' : '所有站點的章都蓋滿了' }}
               </p>
@@ -273,17 +280,17 @@ watch(activeRouteId, () => {
 
         <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
           本活動規劃 {{ ROUTES.length }} 條遊樂路線，串起雲林 {{ ALL_SPOTS.length }} 個活動站點。
-          旅客於站點現場掃碼或定位完成打卡，依打卡進度升級會員等級並獲得點數，
-          最高累積 {{ toComma(CAMPAIGN.quota) }} 點，可於護照的兌換專區換取優惠券。
+          每一站就是一個觀光護照任務，於站點現場掃碼或定位完成打卡即可獲得點數；
+          累積點數達到門檻，會員等級自動提升，並可兌換該等級對應的專屬優惠。
         </p>
 
         <ol class="mt-6 space-y-4">
           <li
             v-for="(t, i) in [
               `${ROUTES.length} 條路線為建議動線，不限定走訪順序，也不限定只能完成一條。`,
-              `完成會員註冊即成為等級一「${LEVELS[0]!.name}」，獲得 ${LEVELS[0]!.reward} 點。`,
-              `任意 ${LEVEL_TWO_CHECKINS} 個站點打卡，升級為等級二「${LEVELS[1]!.name}」，再獲得 ${LEVELS[1]!.reward} 點。`,
-              `首推路線 ${DESIGNATED_SPOT_IDS.length} 個指定站全部打卡，升級為等級三「${LEVELS[2]!.name}」，再獲得 ${LEVELS[2]!.reward} 點。`,
+              `完成會員註冊即獲得 ${CAMPAIGN.signupBonus} 點，直接成為等級一「${LEVELS[0]!.name}」。`,
+              '每個任務依難度不同，可獲得 100～500 點，點數標示於各站點。',
+              `累積 ${LEVELS.map((l) => toComma(l.threshold)).join('／')} 點，分別升級為等級一、二、三；累積點數上限為 ${toComma(CAMPAIGN.quota)} 點。`,
               '點數可於兌換專區換取符合目前等級的優惠；兌換扣除點數，但不影響已取得的等級。',
               '同一會員於同一站點僅計算一次，重複打卡不重複計入。'
             ]"
@@ -299,7 +306,7 @@ watch(activeRouteId, () => {
 
         <p class="mt-6 border-t border-paper-deep pt-4 text-xs leading-relaxed text-ink-faint">
           以上為摘要說明，完整條款請參閱
-          <NuxtLink to="/rules" class="font-bold text-sky-600 underline underline-offset-2">活動辦法</NuxtLink>。
+          <NuxtLink to="/rules" class="-my-2 inline-block py-2 font-bold text-sky-600 underline underline-offset-2">活動辦法</NuxtLink>。
         </p>
       </div>
     </section>

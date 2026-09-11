@@ -75,11 +75,11 @@ export interface MemberRow {
   name: string
   email: string
   identity: 'local' | 'visitor'
-  /** 會員等級；完成註冊即為等級一 */
+  /** 會員等級；由累積點數對照 LEVELS 門檻而來 */
   level: 1 | 2 | 3
-  /** 累積獲得點數（由等級決定） */
+  /** 累積獲得點數：註冊禮 200 ＋ 任務點數（100 的倍數），上限 1,000 */
   earned: number
-  /** 已兌換成優惠券的點數 */
+  /** 已兌換成優惠券的點數（250／500 的組合） */
   spent: number
   /** 一人一帳號控管：信箱／身分證去重命中 */
   dupFlag: boolean
@@ -87,11 +87,11 @@ export interface MemberRow {
 
 export const MEMBERS: MemberRow[] = [
   { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 750, dupFlag: false },
-  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', level: 2, earned: 500, spent: 500, dupFlag: false },
+  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', level: 2, earned: 700, spent: 500, dupFlag: false },
   { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 1000, dupFlag: false },
-  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', level: 1, earned: 250, spent: 0, dupFlag: true },
-  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', level: 1, earned: 250, spent: 0, dupFlag: false },
-  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', level: 2, earned: 500, spent: 250, dupFlag: false }
+  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', level: 1, earned: 300, spent: 0, dupFlag: true },
+  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', level: 1, earned: 200, spent: 0, dupFlag: false },
+  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', level: 2, earned: 600, spent: 250, dupFlag: false }
 ]
 
 export function useAdmin() {

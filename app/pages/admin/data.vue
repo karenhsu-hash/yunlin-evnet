@@ -23,10 +23,16 @@ const visibleMembers = computed(() => {
   }
 })
 
-const spotFilter = ref<'all' | 'designated'>('all')
+/** 依任務點數篩選；客戶審點數分配時可以一眼看出哪些站被訂成幾點 */
+const POINT_TIERS = [...new Set(ALL_SPOTS.map((s) => s.points))].sort((a, b) => a - b)
+const spotFilter = ref<'all' | number>('all')
 const visibleSpots = computed(() =>
-  spotFilter.value === 'designated' ? ALL_SPOTS.filter((s) => isDesignated(s.id)) : ALL_SPOTS
+  spotFilter.value === 'all' ? ALL_SPOTS : ALL_SPOTS.filter((s) => s.points === spotFilter.value)
 )
+const spotFilters = computed(() => [
+  { key: 'all' as const, label: `全部 ${ALL_SPOTS.length}` },
+  ...POINT_TIERS.map((p) => ({ key: p, label: `${p} 點 ${ALL_SPOTS.filter((s) => s.points === p).length}` }))
+])
 
 function exportMembers() {
   downloadCsv('會員清單.csv', [
@@ -133,10 +139,7 @@ function exportStores() {
       <div class="card p-4">
         <div class="flex flex-wrap items-center gap-1.5">
           <button
-            v-for="f in ([
-              { key: 'all', label: `全部 ${ALL_SPOTS.length}` },
-              { key: 'designated', label: `指定站 ${DESIGNATED_SPOT_IDS.length}` }
-            ] as const)"
+            v-for="f in spotFilters"
             :key="f.key"
             class="rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors"
             :class="spotFilter === f.key ? 'bg-ink text-white' : 'bg-paper-soft text-ink-soft'"
@@ -156,7 +159,7 @@ function exportStores() {
               <tr class="border-b-2 border-paper-deep text-left text-ink-soft">
                 <th class="py-2 pr-3 font-bold">景點</th>
                 <th class="py-2 pr-3 font-bold">鄉鎮市</th>
-                <th class="py-2 pr-3 font-bold">任務</th>
+                <th class="py-2 pr-3 text-right font-bold">任務點數</th>
                 <th class="py-2 pr-3 font-bold">打卡方式</th>
                 <th class="py-2 pr-3 font-bold">經緯度</th>
                 <th class="py-2 font-bold">QR</th>
@@ -170,12 +173,7 @@ function exportStores() {
                   </span>
                 </td>
                 <td class="py-2 pr-3 text-ink-soft">{{ s.town }}</td>
-                <td class="py-2 pr-3">
-                  <span v-if="isDesignated(s.id)" class="chip bg-vermilion-100 text-vermilion-700">
-                    <UIcon name="i-lucide-flag" class="size-3" />指定
-                  </span>
-                  <span v-else class="text-ink-faint">一般</span>
-                </td>
+                <td class="py-2 pr-3 text-right font-bold tabular-nums text-marigold-700">{{ s.points }}</td>
                 <td class="py-2 pr-3 text-ink-soft">
                   {{ hasQr(s) ? '掃碼／定位' : `定位（${radiusOf(s)} 公尺）` }}
                 </td>
@@ -194,7 +192,7 @@ function exportStores() {
         <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
           共 {{ ALL_SPOTS.length }} 個站點，其中 {{ ALL_SPOTS.filter(hasQr).length }} 個設有唯一 QR code，
           其餘開放場域以定位打卡。打卡時擷取經緯度與站點座標比對，並綁定會員身分去重。
-          指定站為等級三的升級條件，目前為首推路線的 {{ DESIGNATED_SPOT_IDS.length }} 站。
+          任務點數依難度訂為 100～500 點，目前為示意值，待主辦提供正式點數表。
         </p>
       </div>
     </section>
@@ -258,11 +256,11 @@ function exportStores() {
         <div class="mt-3 grid gap-2.5 lg:grid-cols-2">
           <div
             v-for="p in [
-              { label: '獎勵模式', value: '會員等級點數 → 兌換優惠券 → 店家核銷' },
-              { label: '等級一', value: `${LEVELS[0]!.name}：${LEVELS[0]!.condition}，${LEVELS[0]!.reward} 點` },
-              { label: '等級二', value: `${LEVELS[1]!.name}：任意 ${LEVEL_TWO_CHECKINS} 站打卡，+${LEVELS[1]!.reward} 點` },
-              { label: '等級三', value: `${LEVELS[2]!.name}：指定 ${DESIGNATED_SPOT_IDS.length} 站全蓋，+${LEVELS[2]!.reward} 點` },
-              { label: '每人點數上限', value: `${toComma(CAMPAIGN.quota)} 點` },
+              { label: '獎勵模式', value: '完成任務得點數 → 累積升級 → 兌換優惠券 → 店家核銷' },
+              { label: '註冊禮', value: `${CAMPAIGN.signupBonus} 點（直接達等級一）` },
+              { label: '任務點數', value: `每站依難度 ${Math.min(...ALL_SPOTS.map((s) => s.points))}～${Math.max(...ALL_SPOTS.map((s) => s.points))} 點（示意值）` },
+              { label: '等級門檻', value: LEVELS.map((l) => `${l.name} ${toComma(l.threshold)}`).join('／') },
+              { label: '每人點數上限', value: `${toComma(CAMPAIGN.quota)} 點，封頂後打卡不再加點` },
               { label: '兌換品項', value: REWARDS.map((r) => `${r.name}（${LEVELS[r.minLevel - 1]!.name}起）`).join('、') },
               { label: '券面額', value: '250、500 兩種，不找零' },
               { label: '最低消費', value: `一律 ${CAMPAIGN.minSpend} 元（不分級）` },
@@ -270,7 +268,7 @@ function exportStores() {
               { label: '站點數', value: `${ALL_SPOTS.length} 站（QR ${ALL_SPOTS.filter(hasQr).length}、定位 ${ALL_SPOTS.length - ALL_SPOTS.filter(hasQr).length}）` },
               { label: '合作店家', value: `約 ${CAMPAIGN.storeCount} 家` },
               { label: '活動總期程', value: `${CAMPAIGN.startDate} – ${CAMPAIGN.endDate}（2 個月）` },
-              { label: '結算', value: '週結算核銷請款、週生抽獎名單' }
+              { label: '結算', value: '週結算核銷請款' }
             ]"
             :key="p.label"
             class="flex items-start justify-between gap-3 rounded-2xl bg-paper-soft px-3 py-2.5"

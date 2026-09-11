@@ -130,7 +130,19 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
       <slot />
     </main>
 
-    <footer class="mt-16 border-t border-paper-deep bg-paper">
+    <!-- 頁尾上方的水彩地平線，景物站在頁尾的上框線上。純裝飾。
+         刻意避開護照頁頁首那一排已用過的車子、漁船與農舍，同一頁才不會出現兩排一樣的東西。 -->
+    <div aria-hidden="true" class="pointer-events-none mt-16">
+      <div class="container-page flex items-end justify-center gap-4 sm:gap-8">
+        <img src="/images/art/tree-cone.webp" alt="" loading="lazy" class="h-12 w-auto sm:h-16">
+        <img src="/images/art/village.webp" alt="" loading="lazy" class="h-9 w-auto sm:h-12">
+        <img src="/images/art/bush.webp" alt="" loading="lazy" class="hidden h-7 w-auto sm:block sm:h-9">
+        <img src="/images/art/temple.webp" alt="" loading="lazy" class="h-9 w-auto sm:h-12">
+        <img src="/images/art/tree-slim.webp" alt="" loading="lazy" class="h-11 w-auto sm:h-16">
+        <img src="/images/art/hill-green.webp" alt="" loading="lazy" class="hidden h-9 w-auto sm:block sm:h-12">
+      </div>
+    </div>
+    <footer class="border-t border-paper-deep bg-paper">
       <div class="container-page py-8">
         <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div>
@@ -143,12 +155,13 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
             </p>
           </div>
 
+          <!-- 連結本身只有一行字高，用 py＋負 margin 把可點範圍撐到 32px，版面位置不變 -->
           <nav class="flex flex-wrap gap-x-5 gap-y-2">
             <NuxtLink
               v-for="l in links"
               :key="l.to"
               :to="l.to"
-              class="text-xs font-bold text-ink-soft hover:text-vermilion-600"
+              class="-my-2 py-2 text-xs font-bold text-ink-soft hover:text-vermilion-600"
             >{{ l.label }}</NuxtLink>
           </nav>
         </div>

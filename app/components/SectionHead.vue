@@ -16,7 +16,7 @@ defineProps<{
     <NuxtLink
       v-if="to"
       :to="to"
-      class="group shrink-0 flex items-center gap-0.5 text-xs font-bold text-sky-600 sm:text-sm"
+      class="group -my-2 shrink-0 flex items-center gap-0.5 py-2 text-xs font-bold text-sky-600 sm:text-sm"
     >
       {{ more || '看全部' }}
       <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-hover:translate-x-0.5" />

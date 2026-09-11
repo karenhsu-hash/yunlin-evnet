@@ -19,12 +19,9 @@ const { isCheckedIn } = useCampaign()
         loading="lazy"
         class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
       >
-      <!-- 等級三指定站才標示；一般站點不需要額外說明 -->
-      <span
-        v-if="isDesignated(spot.id)"
-        class="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-vermilion-500/90 px-1.5 py-1 text-[10px] font-bold text-white"
-      >
-        <UIcon name="i-lucide-flag" class="size-3 shrink-0" />指定站
+      <!-- 這個任務值幾點：旅客挑下一站時最想知道的數字，直接壓在照片上 -->
+      <span class="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-marigold-500/95 py-1 text-[11px] font-black text-ink">
+        <UIcon name="i-lucide-coins" class="size-3 shrink-0" />+{{ spot.points }} 點
       </span>
     </div>
 

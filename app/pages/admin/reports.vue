@@ -203,7 +203,7 @@ const GA = [
         </div>
       </div>
 
-      <div class="mt-3 grid gap-4 lg:grid-cols-2">
+      <div class="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div class="card p-4">
           <h3 class="font-black">參與漏斗</h3>
           <p class="mt-0.5 mb-3 text-xs text-ink-soft">各級轉換率</p>

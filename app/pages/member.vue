@@ -2,17 +2,17 @@
 import type { Coupon } from '~/composables/useCampaign'
 
 /**
- * 我的旅遊護照 —— 原本的「會員中心」。
+ * 我的觀光護照 —— 原本的「會員中心」。
  *
  * 從護照的角度重新組織：頁首是護照的個人資料頁（持有人、護照號碼、會員等級、
  * 有效期限），內容三頁分別是印章頁、點數兌換與使用紀錄。
  *
  * 印章頁把全部站點攤成印章格，蓋過的顯示彩色印章、沒蓋的留灰階淡影 ——
- * 護照真正好玩的地方就是那一頁的空格。等級三的指定站另外標旗，讓人知道要蓋哪幾枚。
+ * 護照真正好玩的地方就是那一頁的空格。每一格標出任務點數，讓人挑下一站時知道值多少。
  */
 const {
   isLoggedIn, member, coupons, levelInfo, points, earnedPoints, walletAmount,
-  checkedIn, isCheckedIn, designatedProgress, routeProgress, canRedeem, redeem, resetDemo
+  checkedIn, isCheckedIn, routeProgress, canRedeem, redeem, resetDemo
 } = useCampaign()
 const { redeemRecords } = useMember()
 
@@ -50,12 +50,10 @@ const passportNo = computed(() => {
   return `YL-2026-${String(seed % 100000).padStart(5, '0')}`
 })
 
-/**
- * 印章頁排序：蓋過的在前（先看到成果），沒蓋的指定站其次（下一步該去哪），
- * 其餘站點最後。
- */
-const stampRank = (id: string) => (isCheckedIn(id) ? 0 : isDesignated(id) ? 1 : 2)
-const stampPage = computed(() => [...ALL_SPOTS].sort((a, b) => stampRank(a.id) - stampRank(b.id)))
+/** 印章頁排序：蓋過的在前（先看到成果），其餘照資料順序 */
+const stampPage = computed(() =>
+  [...ALL_SPOTS].sort((a, b) => Number(isCheckedIn(b.id)) - Number(isCheckedIn(a.id)))
+)
 
 /**
  * 每枚印章給一點角度，看起來像手蓋上去的。
@@ -70,9 +68,9 @@ const tiltOf = (id: string) =>
     <!-- 未登入：整頁以登入提示取代 -->
     <div v-if="!isLoggedIn" class="container-narrow py-12 sm:py-20">
       <LoginGate
-        title="登入後查看你的旅遊護照"
+        title="登入後查看你的觀光護照"
         desc="登入後就能看到你蓋了哪些章、拿到哪些券，以及用在哪些店家。"
-        icon="i-lucide-book-marked"
+        art="/images/art/family-four.webp"
       />
     </div>
 
@@ -92,7 +90,7 @@ const tiltOf = (id: string) =>
       <div class="container-page relative py-8 sm:py-10">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="chip bg-white/15 text-white">
-            <UIcon name="i-lucide-book-marked" class="size-3.5" />雲林旅遊護照
+            <UIcon name="i-lucide-book-marked" class="size-3.5" />雲林觀光護照
           </span>
           <span class="font-mono text-[11px] tracking-[0.2em] text-white/60">
             {{ passportNo }}
@@ -161,7 +159,7 @@ const tiltOf = (id: string) =>
     </div>
 
     <div class="container-page py-6 sm:py-8">
-      <div class="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
         <!-- ── 護照分頁（桌機為側欄）───────────────── -->
         <nav class="lg:sticky lg:top-24 lg:self-start">
           <div class="flex gap-1.5 overflow-x-auto no-scrollbar lg:flex-col lg:gap-1">
@@ -209,8 +207,8 @@ const tiltOf = (id: string) =>
                 </span>
               </div>
               <p class="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
-                <UIcon name="i-lucide-flag" class="size-3.5 text-vermilion-500" />
-                指定站 {{ designatedProgress.done }} / {{ designatedProgress.total }}，全部蓋滿即升級為{{ LEVELS[2]!.name }}
+                <UIcon name="i-lucide-coins" class="size-3.5 text-marigold-600" />
+                每一枚章都是一個任務，依難度可得 100～500 點
               </p>
 
               <ul class="mt-5 grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-5">
@@ -232,14 +230,11 @@ const tiltOf = (id: string) =>
                         :class="isCheckedIn(spot.id) ? '' : 'opacity-25 grayscale'"
                       >
                     </span>
-                    <!-- 指定站旗標；放在外層，不跟著印章傾斜 -->
+                    <!-- 任務點數；放在外層，不跟著印章傾斜。蓋過的改成實心，表示已入帳 -->
                     <span
-                      v-if="isDesignated(spot.id)"
-                      class="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full bg-vermilion-500 text-white ring-2 ring-white"
-                      title="等級三指定站"
-                    >
-                      <UIcon name="i-lucide-flag" class="size-3.5" />
-                    </span>
+                      class="absolute -right-2 -top-1 rounded-full px-1.5 py-0.5 text-[10px] font-black ring-2 ring-white"
+                      :class="isCheckedIn(spot.id) ? 'bg-marigold-500 text-ink' : 'bg-marigold-50 text-marigold-700'"
+                    >+{{ spot.points }}</span>
                   </span>
                   <span
                     class="mt-2 line-clamp-2 text-[11px] font-bold leading-tight"
@@ -334,7 +329,7 @@ const tiltOf = (id: string) =>
                     <UButton
                       :color="r.ok ? 'primary' : 'neutral'"
                       :variant="r.ok ? 'solid' : 'soft'"
-                      size="sm"
+                      size="md"
                       :disabled="!r.ok"
                       class="rounded-full font-bold"
                       @click="onRedeem(r.id)"
@@ -404,7 +399,7 @@ const tiltOf = (id: string) =>
             </div>
           </div>
 
-          <button class="mt-8 w-full text-center text-[11px] text-ink-faint underline lg:hidden" @click="resetDemo">
+          <button class="mt-6 w-full py-2 text-center text-[11px] text-ink-faint underline lg:hidden" @click="resetDemo">
             重置我的紀錄
           </button>
         </div>

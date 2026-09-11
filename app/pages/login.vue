@@ -60,7 +60,7 @@ function demoLogin() {
         <img src="/images/logo.png" alt="雲林縣 捲動國旅" class="mx-auto h-16 w-auto">
         <h1 class="mt-4 text-2xl font-black sm:text-3xl">會員登入</h1>
         <p class="mt-2 text-sm text-ink-soft">
-          登入後查看你的任務進度與優惠券
+          登入後查看你的觀光護照、點數與優惠券
         </p>
       </header>
 
@@ -139,7 +139,7 @@ function demoLogin() {
 
       <p class="mt-5 text-center text-sm text-ink-soft">
         還沒有帳號？
-        <NuxtLink to="/register" class="font-bold text-vermilion-600">立即註冊</NuxtLink>
+        <NuxtLink to="/register" class="-my-2 inline-block py-2 font-bold text-vermilion-600">立即註冊</NuxtLink>
       </p>
     </div>
   </div>

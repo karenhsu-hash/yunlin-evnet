@@ -121,7 +121,7 @@ const flaggedStores = computed(() => STORES.filter((s) => s.flagged))
     </section>
 
     <!-- ── 漏斗 + 景點排行 ──────────────────────── -->
-    <section class="mt-4 grid gap-4 lg:grid-cols-2">
+    <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div class="card p-4">
         <h2 class="font-black">參與漏斗</h2>
         <p class="mt-0.5 mb-3 text-xs text-ink-soft">從加好友到實際使用優惠券</p>
@@ -163,28 +163,6 @@ const flaggedStores = computed(() => STORES.filter((s) => s.flagged))
             </div>
           </li>
         </ul>
-      </div>
-    </section>
-
-    <!-- ── 抽獎統計 ─────────────────────────────── -->
-    <section class="mt-4">
-      <div class="card p-4">
-        <h2 class="font-black">抽獎統計</h2>
-        <p class="mt-0.5 text-xs text-ink-soft">系統僅判定資格與生成名單，開獎與寄送為人工作業</p>
-        <div class="mt-3 grid grid-cols-3 gap-2.5">
-          <div v-for="w in LOTTERY_WEEKS" :key="w.id" class="rounded-2xl bg-paper-soft px-3 py-2.5">
-            <p class="text-[11px] font-bold text-ink-soft">{{ w.label }}</p>
-            <p class="mt-0.5 text-lg font-black leading-none tabular-nums">{{ toComma(w.entries) }}</p>
-            <p class="mt-0.5 text-[10px] text-ink-faint">次 ‧ {{ toComma(w.eligible) }} 人</p>
-          </div>
-        </div>
-        <UButton
-          to="/admin/lottery"
-          color="neutral"
-          variant="outline"
-          class="mt-4 rounded-full font-bold"
-          trailing-icon="i-lucide-chevron-right"
-        >產生中獎名單</UButton>
       </div>
     </section>
   </div>

@@ -5,8 +5,7 @@ const { role } = useAdmin()
 const navs = [
   { to: '/admin', label: '儀表板', icon: 'i-lucide-layout-dashboard' },
   { to: '/admin/data', label: '資料維護', icon: 'i-lucide-database' },
-  { to: '/admin/reports', label: '報表請款', icon: 'i-lucide-receipt-text' },
-  { to: '/admin/lottery', label: '抽獎名單', icon: 'i-lucide-dices' }
+  { to: '/admin/reports', label: '報表請款', icon: 'i-lucide-receipt-text' }
 ]
 
 const isActive = (to: string) => (to === '/admin' ? route.path === '/admin' : route.path.startsWith(to))

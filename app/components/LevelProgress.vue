@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * 會員等級階梯：三格等級＋可用點數＋距下一級還差什麼。
- * 取代原本的三段任務（StageProgress），版面沿用同一套三格階梯的視覺語言。
+ * 會員等級階梯：三格等級門檻 ＋ 往下一級的點數進度條 ＋ 可用點數。
+ * 等級看累積獲得的點數（200／500／1,000），兌換掉的不扣，所以只升不降。
  */
 withDefaults(
   defineProps<{
@@ -11,12 +11,12 @@ withDefaults(
   { compact: false }
 )
 
-const { level, points, nextLevel } = useCampaign()
+const { level, earnedPoints, points, nextLevel, levelProgress, atCap } = useCampaign()
 </script>
 
 <template>
   <div>
-    <!-- 三個等級 -->
+    <!-- 三個等級門檻 -->
     <ol class="flex items-stretch gap-1.5 sm:gap-2.5">
       <li
         v-for="l in LEVELS"
@@ -30,6 +30,14 @@ const { level, points, nextLevel } = useCampaign()
               : 'bg-paper-soft border-transparent'
         "
       >
+        <img
+          v-if="!compact"
+          :src="l.art"
+          alt=""
+          loading="lazy"
+          class="mx-auto mb-1 h-9 w-auto object-contain transition sm:h-12"
+          :class="level >= l.level ? '' : 'opacity-30 grayscale'"
+        >
         <p
           class="text-[10px] font-bold tracking-wider sm:text-xs"
           :class="level >= l.level ? 'text-marigold-700' : 'text-ink-faint'"
@@ -45,26 +53,43 @@ const { level, points, nextLevel } = useCampaign()
           :class="level >= l.level ? 'text-marigold-700' : 'text-ink-faint'"
         >
           <UIcon v-if="level >= l.level" name="i-lucide-circle-check" class="size-3.5 shrink-0" />
-          +{{ l.reward }} 點
+          {{ toComma(l.threshold) }} 點
         </p>
       </li>
     </ol>
 
-    <div v-if="!compact" class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
-      <div class="flex items-center gap-2 rounded-2xl bg-marigold-50 px-3.5 py-2 sm:py-2.5">
+    <template v-if="!compact">
+      <!-- 往下一級的點數進度 -->
+      <div class="mt-4">
+        <div class="flex items-baseline justify-between gap-2 text-xs">
+          <span class="text-ink-soft">
+            累積 <b class="text-base font-black text-ink">{{ toComma(earnedPoints) }}</b>
+            <template v-if="nextLevel"> / {{ toComma(nextLevel.threshold) }} 點</template>
+            <template v-else> 點</template>
+          </span>
+          <span v-if="nextLevel" class="text-ink-soft">
+            再 <b class="text-vermilion-600">{{ toComma(nextLevel.remaining) }} 點</b>升級為<b class="text-ink">{{ nextLevel.name }}</b>
+          </span>
+          <span v-else class="flex items-center gap-1 font-bold text-marigold-700">
+            <UIcon name="i-lucide-party-popper" class="size-4" />已是最高等級
+          </span>
+        </div>
+        <div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-paper-deep">
+          <div
+            class="h-full rounded-full bg-marigold-500 transition-[width] duration-500"
+            :style="{ width: `${Math.round(levelProgress * 100)}%` }"
+          />
+        </div>
+        <p v-if="atCap" class="mt-1.5 text-[11px] text-ink-faint">
+          點數已達上限 {{ toComma(CAMPAIGN.quota) }} 點，之後打卡只蓋章、不再加點
+        </p>
+      </div>
+
+      <div class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-marigold-50 px-3.5 py-2 sm:py-2.5">
         <UIcon name="i-lucide-coins" class="size-4 shrink-0 text-marigold-700" />
         <span class="text-xs font-bold text-marigold-700 sm:text-sm">可用點數</span>
         <span class="text-sm font-black text-ink sm:text-base">{{ toComma(points) }}</span>
       </div>
-
-      <p v-if="nextLevel" class="flex-1 text-xs text-ink-soft sm:text-sm">
-        再蓋 <b class="text-vermilion-600">{{ nextLevel.remaining }} {{ nextLevel.designatedOnly ? '個指定站' : '枚章' }}</b>，
-        升級為<b class="text-ink">{{ nextLevel.name }}</b>，獲得 {{ nextLevel.reward }} 點
-      </p>
-      <p v-else class="flex flex-1 items-center gap-1.5 text-xs font-bold text-marigold-700 sm:text-sm">
-        <UIcon name="i-lucide-party-popper" class="size-4" />
-        已是最高等級，累積 {{ toComma(CAMPAIGN.quota) }} 點
-      </p>
-    </div>
+    </template>
   </div>
 </template>

@@ -40,6 +40,8 @@ export interface Spot {
    * 步道、濕地、農業區這種「面」而不是「點」的場域要放大，否則旅客站在園區裡也判定不到。
    */
   radiusM?: number
+  /** 完成這個任務（在此站打卡）可得的點數，100～500，取自 TASK_POINTS */
+  points: number
 }
 
 export interface Coupon {
@@ -54,7 +56,22 @@ export interface Coupon {
   usedStore?: string
 }
 
-export const ALL_SPOTS: Spot[] = [
+/**
+ * 每個任務（站點）的點數。客戶規則：「每個任務依難度不同，可獲得 100～500 點」。
+ * ⚠️ 以下為示意值，依「要花多少力氣才到得了」分四級；客戶的正式點數表來了只換這一張：
+ *   100　市區、交通方便的街區地標
+ *   200　觀光工廠、園區與親子景點
+ *   300　海線、濕地與食農體驗，需要安排半天
+ *   500　偏遠山區與出海口，得特地前往
+ */
+export const TASK_POINTS: Record<string, 100 | 200 | 300 | 500> = {
+  r1: 100, r2: 100, r7: 100, g8: 100, n4: 100, g9: 100,
+  r3: 200, r9: 200, n8: 200, n5: 200, r8: 200, n6: 200, g2: 200, r10: 200,
+  r5: 300, r6: 300, n1: 300, n2: 300, n7: 300, g1: 300, n3: 300, g5: 300, r4: 300, g4: 300, g7: 300,
+  g3: 500, g10: 500, g6: 500
+}
+
+const SPOT_DATA: Omit<Spot, 'points'>[] = [
   { id: 'r1', name: '北港朝天宮商圈', town: '北港鎮', desc: '三百年香火與廟口小吃一條街', distanceKm: 2.4, lat: 23.5748, lng: 120.3038, icon: 'i-lucide-landmark', photo: '/images/spots/r1.jpg', art: '/images/art/temple.webp', mapX: 30, mapY: 62 },
   { id: 'r2', name: '西螺延平老街', town: '西螺鎮', desc: '巴洛克街屋與百年醬油老鋪', distanceKm: 12.8, lat: 23.7986, lng: 120.4658, icon: 'i-lucide-building-2', photo: '/images/spots/r2.jpg', art: '/images/art/village.webp', mapX: 58, mapY: 18 },
   { id: 'r3', name: '虎尾糖廠冰城', town: '虎尾鎮', desc: '日治製糖遺構，必吃古早味冰棒', distanceKm: 8.1, lat: 23.7079, lng: 120.4436, icon: 'i-lucide-ice-cream-cone', photo: '/images/spots/r3.jpg', art: '/images/art/cake.webp', mapX: 52, mapY: 40 },
@@ -90,6 +107,8 @@ export const ALL_SPOTS: Spot[] = [
   { id: 'n4', name: '雲林溪藝文廊帶', town: '斗六市', desc: '縣府主推的水岸光廊與街區彩繪', distanceKm: 15.8, lat: 23.7075, lng: 120.5439, icon: 'i-lucide-palette', photo: '/images/spots/g8.jpg', art: '/images/art/village.webp', mapX: 73, mapY: 36 },
   { id: 'n6', name: '膨鼠森林公園', town: '斗六市', desc: '大型木製溜滑梯與森林系共融遊具', distanceKm: 16.2, lat: 23.7128, lng: 120.5478, icon: 'i-lucide-trees', photo: '/images/spots/g4.jpg', art: '/images/art/tree-pine.webp', mapX: 75, mapY: 33 }
 ]
+
+export const ALL_SPOTS: Spot[] = SPOT_DATA.map((s) => ({ ...s, points: TASK_POINTS[s.id] ?? 100 }))
 
 /**
  * 遊樂路線。旅客先選一條路線，再照 A→B→C 走。
@@ -201,36 +220,27 @@ export const routeSpotIds = (r: Route) => [...new Set(r.days.flatMap((d) => d.sp
 // ── 會員等級與點數 ──────────────────────────────────
 
 /**
- * 會員等級。名稱、條件與點數直接取自客戶 2026-09-11 提供的規則表。
- * 點數只在升級時發放（一站＝一個任務，打卡本身不另給點），最高累積 1,000 點。
+ * 會員等級。依客戶 2026-09 修訂的「觀光護照玩法」：
+ *   完成任務得點數（每站 100～500），累積點數達門檻自動升級。
+ * 等級看的是「累積獲得」的點數，兌換掉的不扣，所以兌換不會降級。
+ *
+ * 註冊禮 200 點剛好是等級一門檻，會員最低就是等級一；
+ * 若之後註冊禮調低，這裡要補「未達等級一」的狀態。
  */
 export interface Level {
   level: 1 | 2 | 3
   name: string
-  condition: string
-  /** 升到這一級時獲得的點數 */
-  reward: number
-  /** 到這一級為止的累積點數，也是可兌換的優惠價值上限 */
-  total: number
+  /** 升到這一級所需的累積點數 */
+  threshold: number
+  /** 等級插圖：啟程＝載著行李出發、探索＝跑進景點、達成＝全家玩完一趟 */
+  art: string
 }
 
 export const LEVELS: Level[] = [
-  { level: 1, name: '啟程會員', condition: '完成會員註冊', reward: 250, total: 250 },
-  { level: 2, name: '探索會員', condition: '完成 2 個行程打卡任務', reward: 250, total: 500 },
-  { level: 3, name: '達成會員', condition: '完成所有指定打卡任務', reward: 500, total: 1000 }
+  { level: 1, name: '啟程會員', threshold: 200, art: '/images/art/car-family.webp' },
+  { level: 2, name: '探索會員', threshold: 500, art: '/images/art/kids-run.webp' },
+  { level: 3, name: '達成會員', threshold: 1000, art: '/images/art/family-four.webp' }
 ]
-
-/** 升等級二需要的打卡站數；任意站點皆可 */
-export const LEVEL_TWO_CHECKINS = 2
-
-/**
- * 等級三的「指定打卡任務」＝首推路線的全部站點。
- * 客戶正式圈選前先用這組；要換成別的站點，改這一行即可，全站（印章格標記、
- * 地圖外環、升級判定、後台篩選）都讀這一份。
- */
-export const DESIGNATED_SPOT_IDS: string[] = routeSpotIds(ROUTES.find((r) => r.featured) ?? ROUTES[0]!)
-
-export const isDesignated = (id: string) => DESIGNATED_SPOT_IDS.includes(id)
 
 /**
  * 兌換專區的品項。
@@ -261,8 +271,10 @@ export const CAMPAIGN = {
   endDate: '2026.10.31',
   /** 券最低消費門檻，250／500 皆同 */
   minSpend: 300,
-  /** 每人可累積的點數上限（＝等級三的累積點數） */
+  /** 每人可累積的點數上限（＝等級三門檻）；封頂後再打卡不加點，每人可兌換價值因此固定 */
   quota: 1000,
+  /** 註冊禮點數（＝等級一門檻，註冊即為啟程會員） */
+  signupBonus: 200,
   /** 兌換後的券有效天數 */
   couponValidDays: 30,
   /** 定位打卡的預設判定半徑（公尺）。站點可用 radiusM 個別覆寫。 */
@@ -299,8 +311,8 @@ export function useCampaign() {
   }))
 
   /**
-   * 示範初始狀態：已打卡 3 站（等級二，累積 500 點）、已兌換一張 250 元券，
-   * 所以可用點數是 250 —— 四個數字彼此對得起來。
+   * 示範初始狀態：註冊禮 200 ＋ 北港朝天宮 100 ＋ 北港女兒橋 100 ＋ 虎尾糖廠 200 ＝ 600 點（等級二），
+   * 已兌換一張 250 元券，所以可用點數是 350 —— 幾個數字彼此對得起來。
    */
   const checkedIn = useState<string[]>('checkedIn', () => ['r1', 'g8', 'r3'])
 
@@ -318,26 +330,28 @@ export function useCampaign() {
 
   const isCheckedIn = (id: string) => checkedIn.value.includes(id)
 
-  /** 指定站點蓋了幾站 */
-  const designatedProgress = computed(() => ({
-    done: DESIGNATED_SPOT_IDS.filter((id) => isCheckedIn(id)).length,
-    total: DESIGNATED_SPOT_IDS.length
-  }))
+  const spotById = (id: string) => ALL_SPOTS.find((s) => s.id === id)
 
   /**
-   * 目前等級。能看到護照就代表已完成註冊，所以最低是等級一。
-   * 指定站全蓋一定也已蓋滿 2 站，不會有跳過等級二的情況。
+   * 累積獲得的點數：註冊禮 ＋ 已完成任務的點數，封頂在 CAMPAIGN.quota。
+   * 兌換不會讓它減少，所以等級只升不降。
    */
-  const level = computed<1 | 2 | 3>(() => {
-    if (designatedProgress.value.done === designatedProgress.value.total) return 3
-    if (checkedIn.value.length >= LEVEL_TWO_CHECKINS) return 2
-    return 1
-  })
+  const earnedPoints = computed(() =>
+    Math.min(
+      CAMPAIGN.quota,
+      CAMPAIGN.signupBonus + checkedIn.value.reduce((s, id) => s + (spotById(id)?.points ?? 0), 0)
+    )
+  )
+
+  /** 點數已封頂：之後打卡只蓋章、不再加點 */
+  const atCap = computed(() => earnedPoints.value >= CAMPAIGN.quota)
+
+  /** 目前等級：已達門檻的最高一級 */
+  const level = computed<1 | 2 | 3>(
+    () => [...LEVELS].reverse().find((l) => earnedPoints.value >= l.threshold)?.level ?? 1
+  )
 
   const levelInfo = computed(() => LEVELS[level.value - 1]!)
-
-  /** 累積獲得的點數（隨等級發放，不會因兌換減少） */
-  const earnedPoints = computed(() => levelInfo.value.total)
 
   /** 已兌換掉的點數；每張券都來自兌換，面額即扣點數 */
   const spentPoints = computed(() => coupons.value.reduce((s, c) => s + c.value, 0))
@@ -345,18 +359,18 @@ export function useCampaign() {
   /** 可用點數 */
   const points = computed(() => earnedPoints.value - spentPoints.value)
 
-  /** 距離下一級：還差幾站、算的是哪一種站點 */
+  /** 距離下一級還差幾點；已是最高等級時為 null */
   const nextLevel = computed(() => {
     if (level.value === 3) return null
     const target = LEVELS[level.value]!
-    if (level.value === 1) {
-      return { ...target, remaining: Math.max(0, LEVEL_TWO_CHECKINS - checkedIn.value.length), designatedOnly: false }
-    }
-    return {
-      ...target,
-      remaining: designatedProgress.value.total - designatedProgress.value.done,
-      designatedOnly: true
-    }
+    return { ...target, remaining: target.threshold - earnedPoints.value }
+  })
+
+  /** 目前等級往下一級的進度（0～1），給進度條用 */
+  const levelProgress = computed(() => {
+    if (!nextLevel.value) return 1
+    const from = levelInfo.value.threshold
+    return (earnedPoints.value - from) / (nextLevel.value.threshold - from)
   })
 
   /** 未使用的券的面額合計 */
@@ -369,8 +383,6 @@ export function useCampaign() {
     const ids = routeSpotIds(r)
     return { done: ids.filter((id) => isCheckedIn(id)).length, total: ids.length }
   }
-
-  const spotById = (id: string) => ALL_SPOTS.find((s) => s.id === id)
 
   /**
    * 能不能兌換某個品項。等級不足優先回報 —— 等級是長期目標，
@@ -402,15 +414,20 @@ export function useCampaign() {
 
   /**
    * 打卡：擷取經緯度 + 綁定會員 + 去重。
-   * 不再自動發券；回傳這次打卡是否剛好升級（用來跳出「升級獲得點數」畫面）。
+   * 回傳這次實際加了幾點（封頂時會少於站點點數，甚至為 0），以及是否剛好跨過升級門檻。
+   * 單一任務最多 500 點，不可能一次跨兩級。
    */
-  function checkIn(id: string): { levelUp: Level | null } {
-    const before = level.value
+  function checkIn(id: string): { gained: number; levelUp: Level | null } {
+    const beforePts = earnedPoints.value
+    const beforeLv = level.value
     if (!checkedIn.value.includes(id)) checkedIn.value.push(id)
-    return { levelUp: level.value > before ? levelInfo.value : null }
+    return {
+      gained: earnedPoints.value - beforePts,
+      levelUp: level.value > beforeLv ? levelInfo.value : null
+    }
   }
 
-  /** 回到剛註冊完的狀態：等級一、250 點、沒有章也沒有券 */
+  /** 回到剛註冊完的狀態：等級一、註冊禮 200 點、沒有章也沒有券 */
   function resetDemo() {
     checkedIn.value = []
     coupons.value = []
@@ -433,8 +450,9 @@ export function useCampaign() {
     coupons,
     level,
     levelInfo,
-    designatedProgress,
+    levelProgress,
     earnedPoints,
+    atCap,
     spentPoints,
     points,
     nextLevel,

@@ -4,12 +4,13 @@ withDefaults(
   defineProps<{
     title?: string
     desc?: string
-    icon?: string
+    /** 插圖；預設是載著行李出發的家庭房車，對應「註冊就開啟護照」 */
+    art?: string
   }>(),
   {
     title: '登入後查看你的專屬進度',
-    desc: '登入後就能看到你的任務進度與優惠券。',
-    icon: 'i-lucide-lock'
+    desc: '登入後就能看到你的觀光護照、點數與優惠券。',
+    art: '/images/art/car-family.webp'
   }
 )
 
@@ -18,9 +19,7 @@ const route = useRoute()
 
 <template>
   <div class="card flex flex-col items-center p-8 text-center sm:p-10">
-    <span class="grid place-items-center size-14 rounded-2xl bg-paper-soft text-ink-faint">
-      <UIcon :name="icon" class="size-7" />
-    </span>
+    <img :src="art" alt="" class="h-24 w-auto object-contain sm:h-28">
     <h3 class="mt-4 text-lg font-black sm:text-xl">{{ title }}</h3>
     <p class="mt-1.5 max-w-sm text-sm leading-relaxed text-ink-soft">{{ desc }}</p>
 
@@ -38,7 +37,7 @@ const route = useRoute()
         variant="outline"
         size="lg"
         class="rounded-full font-bold"
-      >免費註冊</UButton>
+      >免費註冊，領 {{ CAMPAIGN.signupBonus }} 點</UButton>
     </div>
   </div>
 </template>

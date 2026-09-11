@@ -1,5 +1,5 @@
 /**
- * 會員系統 —— 註冊流程、LINE 綁定、旅遊護照紀錄。
+ * 會員系統 —— 註冊流程、LINE 綁定、觀光護照的使用紀錄。
  * 一樣是示意用假資料層，之後替換讀寫來源即可。
  */
 
@@ -23,14 +23,6 @@ export interface RedeemRecord {
   couponValue: 250 | 500
   spend: number
   at: string
-}
-
-export interface LotteryRecord {
-  id: string
-  week: string
-  entries: number
-  result: 'pending' | 'won' | 'lost'
-  prize?: string
 }
 
 /** 註冊流程的步驟定義 */
@@ -86,17 +78,10 @@ export function useMember() {
     () => draft.value.name.trim().length >= 2 && draft.value.address.trim().length >= 6 && idNoValid.value
   )
 
-  /** 旅遊護照：核銷紀錄 */
+  /** 觀光護照：核銷紀錄 */
   const redeemRecords = useState<RedeemRecord[]>('redeemRecords', () => [
     { id: 'rr1', store: '北港圓仔湯老店', town: '北港鎮', couponValue: 250, spend: 420, at: '2026.09.20 14:51' },
     { id: 'rr2', store: '西螺丸莊醬油', town: '西螺鎮', couponValue: 250, spend: 680, at: '2026.09.14 11:08' }
-  ])
-
-  /** 旅遊護照：抽獎紀錄 */
-  const lotteryRecords = useState<LotteryRecord[]>('lotteryRecords', () => [
-    { id: 'lr1', week: '第 3 週', entries: 3, result: 'won', prize: '雲林良品禮盒' },
-    { id: 'lr2', week: '第 2 週', entries: 3, result: 'lost' },
-    { id: 'lr3', week: '第 1 週', entries: 3, result: 'lost' }
   ])
 
   function resetDraft() {
@@ -114,7 +99,6 @@ export function useMember() {
     idNoValid,
     profileValid,
     redeemRecords,
-    lotteryRecords,
     resetDraft
   }
 }

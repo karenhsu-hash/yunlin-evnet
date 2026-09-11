@@ -130,7 +130,7 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
     </section>
 
     <div class="container-page py-6 sm:py-8">
-      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
         <!-- ── 核銷流程 ───────────────────────────── -->
         <div>
           <!-- 步驟指示 -->

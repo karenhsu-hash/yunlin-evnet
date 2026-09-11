@@ -43,7 +43,7 @@ const chapters: Chapter[] = [
       },
       { text: '兩種身分之<b>獎勵條件完全相同</b>，身分別僅供活動統計與成效分析之用。' },
       { text: '本活動採<b>一人一帳號</b>控管，以電子郵件信箱及身分證字號進行識別，重複註冊者不予發放點數。' },
-      { text: '填報資料不實者，主辦單位得取消其參加與中獎資格。' }
+      { text: '填報資料不實者，主辦單位得取消其參加資格並收回已發放之點數。' }
     ]
   },
   {
@@ -57,7 +57,7 @@ const chapters: Chapter[] = [
         subs: ROUTES.map((r) => `${r.name}：${r.tagline}`)
       },
       { text: '路線僅為建議動線，<b>不限定走訪順序</b>，亦不限定僅能完成單一路線。' },
-      { text: `活動站點共 <b>${ALL_SPOTS.length} 處</b>，每一站點之打卡即為一項行程打卡任務。` },
+      { text: `活動站點共 <b>${ALL_SPOTS.length} 處</b>，每一站點之打卡即為一項觀光護照任務，各任務之點數標示於站點頁面。` },
       {
         text: '打卡方式分為兩種，系統均擷取所在位置並與站點座標比對，確認到訪後記入該會員之護照：',
         subs: [
@@ -65,22 +65,22 @@ const chapters: Chapter[] = [
           '定位打卡：步道、濕地等開放場域未設置 QR code，於現場以定位確認抵達。'
         ]
       },
-      { text: '<b>同一會員於同一站點僅計算一次</b>，重複打卡不重複計入。' },
-      {
-        text: `「指定打卡任務」為首推路線「${(ROUTES.find((r) => r.featured) ?? ROUTES[0]!).name}」之 <b>${DESIGNATED_SPOT_IDS.length} 個站點</b>，於站點列表與地圖上以旗標標示。`
-      }
+      { text: '<b>同一會員於同一站點僅計算一次</b>，重複打卡不重複計入。' }
     ]
   },
   {
     id: 'level',
     no: '四',
-    title: '會員等級與點數',
-    intro: '會員等級將依任務完成進度提升，不同等級可獲得對應的點數獎勵，並使用點數兌換優惠。',
+    title: '觀光護照玩法：點數與會員等級',
+    intro: '依序完成觀光護照任務，即可獲得點數。累積點數達到指定門檻後，會員等級會自動提升，並可兌換該等級對應的專屬優惠。',
     items: [
-      { text: `完成會員註冊後，即成為等級一「${LEVELS[0]!.name}」，系統將發放 <b>${LEVELS[0]!.reward} 點</b>。` },
-      { text: `完成 ${LEVEL_TWO_CHECKINS} 個行程打卡任務後，升級為等級二「${LEVELS[1]!.name}」，並再獲得 <b>${LEVELS[1]!.reward} 點</b>。` },
-      { text: `完成所有指定打卡任務後，升級為等級三「${LEVELS[2]!.name}」，並再獲得 <b>${LEVELS[2]!.reward} 點</b>。` },
-      { text: `每人累積點數最高為 <b>${toComma(CAMPAIGN.quota)} 點</b>。點數僅於升級時發放，打卡本身不另計點。` },
+      { text: `完成會員註冊後，系統將發放註冊禮 <b>${CAMPAIGN.signupBonus} 點</b>，即成為等級一「${LEVELS[0]!.name}」。` },
+      { text: '每完成一個觀光護照任務，依任務難度不同，可獲得 <b>100～500 點</b>。' },
+      {
+        text: '累積點數達到下列門檻，會員等級自動提升：',
+        subs: LEVELS.map((l) => `等級${['一', '二', '三'][l.level - 1]}「${l.name}」：累積 ${toComma(l.threshold)} 點`)
+      },
+      { text: `每人累積點數上限為 <b>${toComma(CAMPAIGN.quota)} 點</b>，達上限後完成任務不再累積點數。` },
       { text: '會員可於優惠兌換專區，使用點數兌換符合目前等級的優惠。' },
       { text: '優惠兌換後將扣除相應點數，但<b>不影響已取得的會員等級</b>。' },
       { text: '各項優惠的使用期限、適用店家及使用條件，以優惠券頁面說明為準。' },
@@ -92,7 +92,7 @@ const chapters: Chapter[] = [
     no: '五',
     title: '優惠券使用規則',
     items: [
-      { text: '優惠券以點數於兌換專區兌換取得，兌換後直接存入旅遊護照之券夾。' },
+      { text: '優惠券以點數於兌換專區兌換取得，兌換後直接存入觀光護照之券夾。' },
       { text: '優惠券面額分為 <b>250 元</b>與 <b>500 元</b>兩種。' },
       { text: `每次消費須達 <b>${CAMPAIGN.minSpend} 元</b>以上方可使用優惠券折抵；500 元券亦適用相同門檻，不分級距。` },
       { text: '優惠券<b>不找零</b>。消費金額未達券面額者，差額不予退還；超過部分由消費者自行支付。' },
@@ -101,7 +101,7 @@ const chapters: Chapter[] = [
       {
         text: '使用方式：',
         subs: [
-          '結帳時向店家出示旅遊護照中之優惠券。',
+          '結帳時向店家出示觀光護照中之優惠券。',
           '由店家確認消費金額並完成折抵。',
           '店家端完成扣券後，該張券即標記為已使用。'
         ]
@@ -124,7 +124,7 @@ const chapters: Chapter[] = [
       },
       { text: '個人資料之利用期間為活動期間及活動結束後依法令規定應保存之期間，利用地區為中華民國境內。' },
       { text: '會員得依個人資料保護法規定，向主辦單位請求查詢、閱覽、補正、刪除或停止利用其個人資料；惟行使前述權利致無法完成活動所需之身分確認者，將無法繼續參加本活動。' },
-      { text: '綁定 LINE 官方帳號為選擇性項目，主要用於任務完成與券到帳之通知。' }
+      { text: '綁定 LINE 官方帳號為選擇性項目，主要用於會員升級、點數到帳與優惠券到期之通知，不影響會員等級與點數。' }
     ]
   },
   {
@@ -132,7 +132,7 @@ const chapters: Chapter[] = [
     no: '七',
     title: '注意事項與爭議處理',
     items: [
-      { text: '參加者不得以任何不正當方式（包含但不限於偽造位置資訊、大量申辦信箱、代刷等）取得活動資格。經查證屬實者，主辦單位得取消其資格並追回已發放之獎勵。' },
+      { text: '參加者不得以任何不正當方式（包含但不限於偽造位置資訊、大量申辦信箱、代刷等）取得活動資格。經查證屬實者，主辦單位得取消其資格並收回已發放之點數與優惠券。' },
       { text: '系統將持續監控異常之核銷行為；經判定異常者，該筆交易得暫緩結算並進行人工複核。' },
       { text: '如遇天災或其他不可抗力因素，主辦單位得暫停、變更或終止本活動，並於官方網站公告。' },
       { text: '本活動辦法如有未盡事宜，主辦單位保留修改、變更或終止之權利，並以官方網站公告為準。' },
@@ -186,7 +186,7 @@ onMounted(() => {
     </section>
 
     <div class="container-page py-8 sm:py-10">
-      <div class="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
         <!-- ── 目錄（桌機側欄）───────────────────── -->
         <nav class="lg:sticky lg:top-24 lg:self-start">
           <p class="text-xs font-black tracking-widest text-ink-faint">目錄</p>
@@ -245,8 +245,9 @@ onMounted(() => {
 
           <!-- 頁尾行動 -->
           <div class="mt-4 rounded-card bg-paper-soft p-6 text-center sm:p-8">
+            <img :src="LEVELS[0]!.art" alt="" loading="lazy" class="mx-auto mb-3 h-20 w-auto object-contain">
             <h2 class="text-lg font-black sm:text-xl">看完了，出發吧</h2>
-            <p class="mt-1.5 text-sm text-ink-soft">註冊即得 {{ LEVELS[0]!.reward }} 點，打卡升級最高累積 {{ toComma(CAMPAIGN.quota) }} 點。</p>
+            <p class="mt-1.5 text-sm text-ink-soft">註冊即得 {{ CAMPAIGN.signupBonus }} 點，完成任務累積點數，最高 {{ toComma(CAMPAIGN.quota) }} 點。</p>
             <div class="mt-5 flex flex-wrap justify-center gap-3">
               <UButton to="/register" color="primary" size="lg" icon="i-lucide-user-plus" class="rounded-full font-bold">
                 馬上參加

@@ -45,7 +45,7 @@ const emailTaken = computed(() => TAKEN_EMAILS.includes(normalizedEmail.value))
 
 /**
  * 寫入會員資料並開通護照。
- * 新會員一律從等級一（250 點）開始：清掉示範資料留下的章與券，
+ * 新會員一律從等級一（註冊禮 200 點）開始：清掉示範資料留下的章與券，
  * 否則完成頁說「你已成為啟程會員」，護照卻顯示探索會員。
  */
 function completeRegistration(lineBound: boolean) {
@@ -87,7 +87,7 @@ function fillDemo() {
     <header class="text-center">
       <span class="chip bg-sky-100 text-sky-700">會員註冊</span>
       <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">加入捲動國旅</h1>
-      <p class="mt-2 text-sm text-ink-soft">完成註冊即獲得 {{ LEVELS[0]!.reward }} 點，一個信箱限一組帳號</p>
+      <p class="mt-2 text-sm text-ink-soft">完成註冊即獲得 {{ CAMPAIGN.signupBonus }} 點，一個信箱限一組帳號</p>
     </header>
 
     <!-- ── 步驟指示 ─────────────────────────────── -->
@@ -193,7 +193,7 @@ function fillDemo() {
         >驗證並繼續</UButton>
       </div>
 
-      <button class="mt-3 w-full text-xs text-ink-faint underline" @click="fillDemo">
+      <button class="mt-1 w-full py-2 text-xs text-ink-faint underline" @click="fillDemo">
         快速帶入資料
       </button>
     </section>
@@ -243,7 +243,7 @@ function fillDemo() {
             <label class="text-xs font-bold text-ink-soft" for="idno">身分證字號</label>
             <UInput id="idno" v-model="draft.idNo" maxlength="10" placeholder="A123456789" size="lg" class="mt-1.5 w-full" :ui="{ base: 'uppercase' }" />
             <p class="mt-1 text-[11px] text-ink-faint">
-              僅用於身分核對與中獎資格確認
+              僅用於身分核對與一人一帳號控管
               <span v-if="draft.idNo && !idNoValid" class="font-bold text-vermilion-600">‧ 格式不正確</span>
             </p>
           </div>
@@ -271,7 +271,7 @@ function fillDemo() {
         <h2 class="flex items-center gap-2 text-lg font-black">
           <UIcon name="i-lucide-compass" class="size-5 text-vermilion-500" />選擇身分
         </h2>
-        <p class="mt-1 text-xs text-ink-soft">兩種身分的優惠券條件完全相同</p>
+        <p class="mt-1 text-xs text-ink-soft">兩種身分的會員等級與點數條件完全相同</p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
           <button
@@ -300,7 +300,7 @@ function fillDemo() {
           variant="soft"
           icon="i-lucide-triangle-alert"
           title="所選身分與通訊地址判別不一致"
-          description="優惠券條件不受影響；如填報不實，主辦單位得取消參加資格。"
+          description="等級與點數條件不受影響；如填報不實，主辦單位得取消參加資格。"
           class="mt-4"
         />
 
@@ -333,19 +333,12 @@ function fillDemo() {
         <div class="bg-moss-50 px-6 py-10 text-center">
           <UIcon name="i-lucide-message-circle" class="size-14 text-moss-600" />
           <h2 class="mt-3 text-xl font-black sm:text-2xl">綁定 LINE 官方帳號</h2>
-          <p class="mt-1.5 text-xs text-ink-soft">接收任務完成與券到帳通知</p>
+          <p class="mt-1.5 text-xs text-ink-soft">選擇性綁定，不影響會員等級與點數</p>
         </div>
 
         <div class="p-5 sm:p-7">
-          <div class="flex items-center gap-3 rounded-2xl bg-marigold-50 p-4">
-            <UIcon name="i-lucide-gift" class="size-6 shrink-0 text-marigold-700" />
-            <p class="text-xs leading-relaxed text-marigold-700">
-              加好友即贈 <b>50 元</b>店家折抵金
-            </p>
-          </div>
-
-          <ul class="mt-4 space-y-2 text-xs text-ink-soft">
-            <li v-for="t in ['任務完成、優惠券到帳即時通知', '活動與店家最新消息', '推播頻率低，不擾民']" :key="t" class="flex items-center gap-2">
+          <ul class="space-y-2 text-xs text-ink-soft">
+            <li v-for="t in ['會員升級、點數到帳即時通知', '優惠券到期前提醒', '活動與店家最新消息，推播頻率低']" :key="t" class="flex items-center gap-2">
               <UIcon name="i-lucide-check" class="size-4 shrink-0 text-moss-600" />{{ t }}
             </li>
           </ul>
@@ -371,7 +364,7 @@ function fillDemo() {
     <section v-else class="mt-6 animate-pop-in">
       <div class="card overflow-hidden">
         <div class="bg-vermilion-50 px-6 py-12 text-center">
-          <UIcon name="i-lucide-party-popper" class="size-16 text-vermilion-500" />
+          <img :src="LEVELS[0]!.art" alt="" class="mx-auto h-24 w-auto object-contain">
           <h2 class="mt-3 text-2xl font-black sm:text-3xl">註冊完成</h2>
           <p class="mt-1.5 text-xs text-ink-soft">護照已開通，現在就出發蓋下第一枚章</p>
 
@@ -380,11 +373,11 @@ function fillDemo() {
             <UIcon name="i-lucide-coins" class="size-7 shrink-0" />
             <div>
               <p class="text-[11px] font-bold text-ink/70">等級一 ‧ {{ LEVELS[0]!.name }}</p>
-              <p class="text-lg font-black leading-tight">獲得 {{ LEVELS[0]!.reward }} 點</p>
+              <p class="text-lg font-black leading-tight">獲得 {{ CAMPAIGN.signupBonus }} 點</p>
             </div>
           </div>
           <p class="mt-3 text-[11px] text-ink-soft">
-            再蓋 {{ LEVEL_TWO_CHECKINS }} 枚章，升級為{{ LEVELS[1]!.name }}並再獲得 {{ LEVELS[1]!.reward }} 點
+            每完成一個任務可得 100～500 點，累積 {{ LEVELS[1]!.threshold }} 點升級為{{ LEVELS[1]!.name }}
           </p>
         </div>
 
@@ -400,7 +393,7 @@ function fillDemo() {
           <div class="flex justify-between py-3 text-sm">
             <dt class="text-ink-soft">LINE 綁定</dt>
             <dd class="font-bold" :class="member.lineBound ? 'text-moss-600' : 'text-ink-faint'">
-              {{ member.lineBound ? '已綁定 ‧ +50 元折抵金' : '尚未綁定' }}
+              {{ member.lineBound ? '已綁定' : '尚未綁定' }}
             </dd>
           </div>
         </dl>

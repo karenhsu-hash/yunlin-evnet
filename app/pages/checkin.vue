@@ -10,7 +10,7 @@ import type { Level, Spot } from '~/composables/useCampaign'
  * hasQr 為 false 的站點只提供定位打卡，選到時自動切過去，掃碼那個分頁會被停用。
  */
 const route = useRoute()
-const { isLoggedIn, member, isCheckedIn, spotById, checkIn } = useCampaign()
+const { isLoggedIn, member, isCheckedIn, spotById, checkIn, earnedPoints } = useCampaign()
 
 type Method = 'qr' | 'geo'
 type Phase = 'idle' | 'scanning' | 'locating' | 'done'
@@ -31,6 +31,8 @@ const method = ref<Method>(target.value && !hasQr(target.value) ? 'geo' : 'qr')
 const result = ref<{
   ok: boolean
   duplicated: boolean
+  /** 這一章實際加了幾點；點數封頂後為 0 */
+  gained: number
   /** 這一章剛好讓會員升級時，升到哪一級 */
   levelUp: Level | null
 } | null>(null)
@@ -60,10 +62,10 @@ watch(target, (t) => {
   if (t && !hasQr(t)) method.value = 'geo'
 })
 
-/** 快速挑站：還沒蓋的站點，指定站排前面（升等級三要蓋的） */
+/** 快速挑站：還沒蓋的站點，由近到遠 */
 const pickList = computed(() =>
   ALL_SPOTS.filter((s) => !isCheckedIn(s.id))
-    .sort((a, b) => Number(isDesignated(b.id)) - Number(isDesignated(a.id)))
+    .sort((a, b) => a.distanceKm - b.distanceKm)
     .slice(0, 8)
 )
 
@@ -76,10 +78,10 @@ function pickSpot(): Spot {
 let timers: ReturnType<typeof setTimeout>[] = []
 onUnmounted(() => timers.forEach(clearTimeout))
 
-/** 寫入打卡紀錄（兩種方式共用），並記下這一章是否剛好讓會員升級 */
+/** 寫入打卡紀錄（兩種方式共用），並記下加了幾點、是否剛好讓會員升級 */
 function finish(spot: Spot) {
   const duplicated = isCheckedIn(spot.id)
-  const outcome = duplicated ? { levelUp: null } : checkIn(spot.id)
+  const outcome = duplicated ? { gained: 0, levelUp: null } : checkIn(spot.id)
   result.value = { ok: true, duplicated, ...outcome }
   phase.value = 'done'
 }
@@ -192,7 +194,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
       <LoginGate
         title="登入後才能打卡"
         desc="打卡會記錄在你的帳號下，請先登入再開始。"
-        icon="i-lucide-qr-code"
+        art="/images/art/kids-run.webp"
       />
     </div>
 
@@ -200,7 +202,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
     <!-- ── 頁首 ─────────────────────────────────── -->
     <header class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <span class="chip bg-vermilion-100 text-vermilion-700">旅遊護照</span>
+        <span class="chip bg-vermilion-100 text-vermilion-700">觀光護照</span>
         <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">護照集章</h1>
         <p class="mt-1.5 max-w-lg text-sm text-ink-soft">
           走到站點現場，掃碼或定位，就能在護照上蓋下一枚章。
@@ -217,7 +219,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
       </div>
     </header>
 
-    <div class="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
+    <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
       <!-- ── 左：掃描器 / 結果 ────────────────────── -->
       <div>
         <!-- 打卡前：先選方式，再掃碼或定位 -->
@@ -317,8 +319,8 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
                 <p class="text-[11px] text-ink-faint">即將蓋章</p>
                 <p class="font-bold truncate">{{ target.name }}</p>
               </div>
-              <span v-if="isDesignated(target.id)" class="chip shrink-0 bg-vermilion-100 text-vermilion-700">
-                <UIcon name="i-lucide-flag" class="size-3" />指定站
+              <span class="chip shrink-0 bg-marigold-100 text-marigold-700">
+                <UIcon name="i-lucide-coins" class="size-3" />+{{ target.points }} 點
               </span>
             </div>
 
@@ -396,7 +398,9 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
         <template v-else-if="target && result">
           <div v-if="result.duplicated" class="card overflow-hidden animate-pop-in">
             <div class="bg-paper-deep px-6 py-10 text-center">
-              <UIcon name="i-lucide-rotate-ccw" class="size-14 text-ink-soft" />
+              <span class="mx-auto grid size-24 place-items-center rounded-full border-2 border-dashed border-ink-faint bg-white/60">
+                <img :src="target.art" alt="" class="size-16 object-contain opacity-60 grayscale">
+              </span>
               <h2 class="mt-3 text-xl font-black sm:text-2xl">這一站已經蓋過章了</h2>
               <p class="mt-1.5 text-xs text-ink-soft">每一站只能蓋一枚章，換個地方再來吧</p>
             </div>
@@ -410,9 +414,18 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
           <div v-else class="card overflow-hidden animate-pop-in">
             <div class="bg-vermilion-50 px-6 py-10 text-center">
-              <UIcon name="i-lucide-circle-check-big" class="size-16 text-vermilion-500" />
+              <!-- 蓋下去的就是護照印章格裡的那一枚：同一張插圖、同樣的紅框與傾斜 -->
+              <span class="mx-auto grid size-28 -rotate-6 place-items-center rounded-full border-4 border-vermilion-500 bg-white shadow-card animate-pop-in">
+                <img :src="target.art" alt="" class="size-20 object-contain">
+              </span>
               <h2 class="mt-3 text-2xl font-black sm:text-3xl">蓋章成功！</h2>
-              <p class="mt-1.5 text-xs text-ink-soft">已蓋進你的旅遊護照</p>
+              <p v-if="result.gained" class="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-marigold-500 px-4 py-1.5 text-base font-black text-ink">
+                <UIcon name="i-lucide-coins" class="size-4.5" />+{{ result.gained }} 點
+              </p>
+              <p class="mt-2 text-xs text-ink-soft">
+                <template v-if="result.gained">已蓋進你的觀光護照，累積 {{ toComma(earnedPoints) }} 點</template>
+                <template v-else>已蓋進你的觀光護照。點數已達上限 {{ toComma(CAMPAIGN.quota) }} 點，本次不再加點</template>
+              </p>
             </div>
 
             <div class="p-5 sm:p-6">
@@ -428,10 +441,8 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
               <dl class="mt-4 grid grid-cols-2 gap-2.5 text-[11px]">
                 <div class="rounded-2xl bg-paper-soft px-3 py-2.5">
-                  <dt class="text-ink-faint">站點</dt>
-                  <dd class="mt-0.5 font-bold">
-                    {{ isDesignated(target.id) ? `${LEVELS[2]!.name}指定站` : '一般站點' }}
-                  </dd>
+                  <dt class="text-ink-faint">任務點數</dt>
+                  <dd class="mt-0.5 font-bold">{{ target.points }} 點</dd>
                 </div>
                 <div class="rounded-2xl bg-paper-soft px-3 py-2.5">
                   <dt class="text-ink-faint">蓋章時間</dt>
@@ -443,12 +454,12 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
           <!-- 這一章剛好升級 -->
           <div v-if="result.levelUp" class="mt-4 rounded-card bg-marigold-500 p-5 text-center shadow-pop animate-pop-in">
-            <UIcon name="i-lucide-party-popper" class="size-9 text-ink" />
+            <img :src="result.levelUp.art" alt="" class="mx-auto h-20 w-auto object-contain">
             <p class="mt-1.5 text-lg font-black text-ink">
-              升級為{{ result.levelUp.name }}，獲得 {{ result.levelUp.reward }} 點
+              升級為等級{{ ['一', '二', '三'][result.levelUp.level - 1] }}「{{ result.levelUp.name }}」
             </p>
             <p class="mt-0.5 text-[11px] text-ink/70">
-              累積 {{ toComma(result.levelUp.total) }} 點，可到護照的點數兌換專區換優惠券
+              累積點數已達 {{ toComma(result.levelUp.threshold) }} 點，可兌換這個等級的專屬優惠
             </p>
             <UButton to="/member" color="neutral" variant="solid" size="sm" class="mt-3 rounded-full font-bold" trailing-icon="i-lucide-chevron-right">
               去兌換
@@ -466,7 +477,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
         </template>
       </div>
 
-      <!-- ── 右：任務進度 + 快速挑景點 ───────────── -->
+      <!-- ── 右：我的護照 + 快速挑站點 ───────────── -->
       <div class="space-y-5">
         <div class="card p-5 sm:p-6">
           <h2 class="text-lg font-black">我的護照</h2>
@@ -493,7 +504,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-xs font-bold">{{ spot.name }}</span>
                 <span class="block text-[10px] text-ink-faint">
-                  {{ spot.town }}<template v-if="isDesignated(spot.id)"> ‧ 指定站</template>
+                  {{ spot.town }} ‧ <b class="text-marigold-700">+{{ spot.points }} 點</b>
                 </span>
               </span>
             </button>
