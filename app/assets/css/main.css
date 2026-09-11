@@ -101,13 +101,10 @@
    * 圖表專用色階。UI 色票彩度偏低（紙感風格），直接畫圖會被判定成灰、
    * 且對比不足，故另取同色相加深版本。已通過 dataviz 六項檢核：
    *   發券 #B37F06 ↔ 核銷 #0E6FA5：CVD ΔE 22.1、正常視覺 ΔE 26.9
-   *   體驗站 #C4402E ↔ 亮點站 #2E7D53：CVD ΔE 7.9（6–8 下限帶，
-   *     故一律搭配圖例與直接標籤等次要編碼）
+   * 站點排行為單一數列，沿用核銷色，不需要第二組對比色。
    */
   --color-chart-issued: #b37f06;
   --color-chart-redeemed: #0e6fa5;
-  --color-chart-red: #c4402e;
-  --color-chart-green: #2e7d53;
   --color-chart-grid: #e7decc;
 
   --font-sans: "Noto Sans TC", ui-sans-serif, system-ui, -apple-system,

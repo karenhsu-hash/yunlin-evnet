@@ -1,29 +1,45 @@
 <script setup lang="ts">
+import type { Coupon } from '~/composables/useCampaign'
+
 /**
  * 我的旅遊護照 —— 原本的「會員中心」。
  *
- * 從護照的角度重新組織：頁首是護照的個人資料頁（持有人、護照號碼、簽發身分、
- * 有效期限），內容三頁分別是印章頁、券夾與使用紀錄。
+ * 從護照的角度重新組織：頁首是護照的個人資料頁（持有人、護照號碼、會員等級、
+ * 有效期限），內容三頁分別是印章頁、點數兌換與使用紀錄。
  *
- * 最大的改動在印章頁：原本是兩欄的文字清單，改成把全部站點攤成印章格，
- * 蓋過的顯示彩色印章、沒蓋的留虛線空格 —— 護照真正好玩的地方就是那一頁的空格。
+ * 印章頁把全部站點攤成印章格，蓋過的顯示彩色印章、沒蓋的留灰階淡影 ——
+ * 護照真正好玩的地方就是那一頁的空格。等級三的指定站另外標旗，讓人知道要蓋哪幾枚。
  */
 const {
-  isLoggedIn, member, coupons, completedStages, walletAmount, earnedAmount,
-  checkedIn, isCheckedIn, routeProgress, resetDemo
+  isLoggedIn, member, coupons, levelInfo, points, earnedPoints, walletAmount,
+  checkedIn, isCheckedIn, designatedProgress, routeProgress, canRedeem, redeem, resetDemo
 } = useCampaign()
 const { redeemRecords } = useMember()
 
-type Tab = 'stamps' | 'coupon' | 'redeem'
+type Tab = 'stamps' | 'points' | 'redeem'
 const tab = ref<Tab>('stamps')
 
 const tabs: { key: Tab; label: string; icon: string }[] = [
   { key: 'stamps', label: '印章頁', icon: 'i-lucide-stamp' },
-  { key: 'coupon', label: '我的券夾', icon: 'i-lucide-ticket' },
+  { key: 'points', label: '點數兌換', icon: 'i-lucide-gift' },
   { key: 'redeem', label: '使用紀錄', icon: 'i-lucide-receipt-text' }
 ]
 
 const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.couponValue, 0))
+
+/** 兌換品項連同「現在能不能換、不能的話為什麼」一起算好，模板只管顯示 */
+const rewardList = computed(() =>
+  REWARDS.map((r) => {
+    const check = canRedeem(r)
+    return { ...r, ok: check.ok, reason: check.ok ? '' : check.reason }
+  })
+)
+
+/** 剛兌換到的券，用來在兌換區上方給一個確認提示 */
+const justRedeemed = ref<Coupon | null>(null)
+function onRedeem(rewardId: string) {
+  justRedeemed.value = redeem(rewardId)
+}
 
 /**
  * 護照號碼：從信箱推出一組穩定的編號，重新整理不會變。
@@ -34,10 +50,12 @@ const passportNo = computed(() => {
   return `YL-2026-${String(seed % 100000).padStart(5, '0')}`
 })
 
-/** 印章頁：全部站點，蓋過的排前面，讓已完成的成果先被看到 */
-const stampPage = computed(() =>
-  [...ALL_SPOTS].sort((a, b) => Number(isCheckedIn(b.id)) - Number(isCheckedIn(a.id)))
-)
+/**
+ * 印章頁排序：蓋過的在前（先看到成果），沒蓋的指定站其次（下一步該去哪），
+ * 其餘站點最後。
+ */
+const stampRank = (id: string) => (isCheckedIn(id) ? 0 : isDesignated(id) ? 1 : 2)
+const stampPage = computed(() => [...ALL_SPOTS].sort((a, b) => stampRank(a.id) - stampRank(b.id)))
 
 /**
  * 每枚印章給一點角度，看起來像手蓋上去的。
@@ -105,7 +123,11 @@ const tiltOf = (id: string) =>
             </div>
           </div>
 
-          <dl class="grid grid-cols-3 gap-2.5 sm:gap-4 lg:w-[380px]">
+          <dl class="grid grid-cols-3 gap-2.5 sm:gap-4 lg:w-[400px]">
+            <div class="rounded-2xl bg-marigold-500 px-3 py-3 text-center text-ink">
+              <dt class="text-[10px] font-bold text-ink/70">等級{{ ['一', '二', '三'][levelInfo.level - 1] }}</dt>
+              <dd class="mt-1 text-base font-black leading-none sm:text-lg">{{ levelInfo.name }}</dd>
+            </div>
             <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
               <dt class="text-[10px] text-white/70">已蓋章</dt>
               <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
@@ -113,16 +135,8 @@ const tiltOf = (id: string) =>
               </dd>
             </div>
             <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
-              <dt class="text-[10px] text-white/70">已解鎖</dt>
-              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
-                {{ completedStages }}<span class="text-[10px] font-bold"> /3 段</span>
-              </dd>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
-              <dt class="text-[10px] text-white/70">券夾餘額</dt>
-              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
-                <span class="text-[10px] align-top">$</span>{{ walletAmount }}
-              </dd>
+              <dt class="text-[10px] text-white/70">可用點數</dt>
+              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">{{ toComma(points) }}</dd>
             </div>
           </dl>
         </div>
@@ -173,16 +187,16 @@ const tiltOf = (id: string) =>
         <div>
           <!-- 印章頁 -->
           <div v-if="tab === 'stamps'" class="space-y-4">
-            <!-- 集章獎勵 -->
+            <!-- 會員等級 -->
             <div class="card p-5 sm:p-6">
               <div class="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 class="text-lg font-black sm:text-xl">集章獎勵</h2>
+                <h2 class="text-lg font-black sm:text-xl">會員等級</h2>
                 <span class="text-xs text-ink-soft">
-                  累計取得 <b class="text-marigold-700">{{ earnedAmount }}</b> 元
+                  累積獲得 <b class="text-marigold-700">{{ toComma(earnedPoints) }}</b> 點
                 </span>
               </div>
               <div class="mt-4">
-                <StageProgress :completed="completedStages" />
+                <LevelProgress />
               </div>
             </div>
 
@@ -194,24 +208,38 @@ const tiltOf = (id: string) =>
                   {{ checkedIn.length }} / {{ ALL_SPOTS.length }} 枚
                 </span>
               </div>
+              <p class="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
+                <UIcon name="i-lucide-flag" class="size-3.5 text-vermilion-500" />
+                指定站 {{ designatedProgress.done }} / {{ designatedProgress.total }}，全部蓋滿即升級為{{ LEVELS[2]!.name }}
+              </p>
 
               <ul class="mt-5 grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-5">
                 <li v-for="spot in stampPage" :key="spot.id" class="flex flex-col items-center text-center">
-                  <span
-                    class="grid size-[4.5rem] place-items-center rounded-full transition-transform sm:size-20"
-                    :class="isCheckedIn(spot.id)
-                      ? [kindOf(spot.type).chip, 'border-[3px] border-current shadow-card']
-                      : 'border-2 border-dashed border-paper-deep bg-paper-soft'"
-                    :style="isCheckedIn(spot.id) ? { transform: `rotate(${tiltOf(spot.id)}deg)` } : undefined"
-                  >
-                    <!-- 沒蓋到的先給灰階淡影，讓人看得到「還缺這一枚長什麼樣」 -->
-                    <img
-                      :src="spot.art"
-                      alt=""
-                      loading="lazy"
-                      class="size-12 object-contain sm:size-14"
-                      :class="isCheckedIn(spot.id) ? '' : 'opacity-25 grayscale'"
+                  <span class="relative">
+                    <span
+                      class="grid size-[4.5rem] place-items-center rounded-full transition-transform sm:size-20"
+                      :class="isCheckedIn(spot.id)
+                        ? 'border-[3px] border-vermilion-500 bg-vermilion-50 shadow-card'
+                        : 'border-2 border-dashed border-paper-deep bg-paper-soft'"
+                      :style="isCheckedIn(spot.id) ? { transform: `rotate(${tiltOf(spot.id)}deg)` } : undefined"
                     >
+                      <!-- 沒蓋到的先給灰階淡影，讓人看得到「還缺這一枚長什麼樣」 -->
+                      <img
+                        :src="spot.art"
+                        alt=""
+                        loading="lazy"
+                        class="size-12 object-contain sm:size-14"
+                        :class="isCheckedIn(spot.id) ? '' : 'opacity-25 grayscale'"
+                      >
+                    </span>
+                    <!-- 指定站旗標；放在外層，不跟著印章傾斜 -->
+                    <span
+                      v-if="isDesignated(spot.id)"
+                      class="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full bg-vermilion-500 text-white ring-2 ring-white"
+                      title="等級三指定站"
+                    >
+                      <UIcon name="i-lucide-flag" class="size-3.5" />
+                    </span>
                   </span>
                   <span
                     class="mt-2 line-clamp-2 text-[11px] font-bold leading-tight"
@@ -262,33 +290,90 @@ const tiltOf = (id: string) =>
             </div>
           </div>
 
-          <!-- 我的券夾 -->
-          <div v-else-if="tab === 'coupon'">
-            <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-card">
-              <span class="text-sm text-ink-soft">可用餘額</span>
-              <span class="text-xl font-black text-vermilion-500">
-                <span class="text-sm align-top">$</span>{{ walletAmount }}
-              </span>
+          <!-- 點數兌換：上半兌換專區，下半已兌換的券 -->
+          <div v-else-if="tab === 'points'" class="space-y-4">
+            <div class="card p-5 sm:p-6">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-black sm:text-xl">兌換專區</h2>
+                  <p class="mt-0.5 text-xs text-ink-soft">兌換後扣除點數，不影響已取得的會員等級</p>
+                </div>
+                <div class="flex items-center gap-2 rounded-2xl bg-marigold-50 px-3.5 py-2">
+                  <UIcon name="i-lucide-coins" class="size-4 text-marigold-700" />
+                  <span class="text-xs font-bold text-marigold-700">可用點數</span>
+                  <span class="text-lg font-black text-ink">{{ toComma(points) }}</span>
+                </div>
+              </div>
+
+              <div
+                v-if="justRedeemed"
+                class="mt-4 flex items-center gap-2 rounded-2xl bg-moss-50 px-4 py-3 text-sm font-bold text-moss-700 animate-pop-in"
+              >
+                <UIcon name="i-lucide-circle-check" class="size-5 shrink-0" />
+                已兌換 {{ justRedeemed.value }} 元優惠券，放進下方券夾了
+              </div>
+
+              <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+                <li
+                  v-for="r in rewardList"
+                  :key="r.id"
+                  class="flex flex-col rounded-2xl border-2 p-4"
+                  :class="r.ok ? 'border-marigold-500 bg-marigold-50/50' : 'border-paper-deep bg-white'"
+                >
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <p class="font-black">{{ r.name }}</p>
+                      <p class="mt-0.5 text-[11px] text-ink-soft">{{ r.desc }}</p>
+                    </div>
+                    <span class="chip shrink-0 bg-paper-soft text-ink-soft">
+                      {{ LEVELS[r.minLevel - 1]!.name }}起
+                    </span>
+                  </div>
+                  <div class="mt-4 flex items-center justify-between gap-2">
+                    <span class="text-sm font-black text-marigold-700">{{ r.cost }} 點</span>
+                    <UButton
+                      :color="r.ok ? 'primary' : 'neutral'"
+                      :variant="r.ok ? 'solid' : 'soft'"
+                      size="sm"
+                      :disabled="!r.ok"
+                      class="rounded-full font-bold"
+                      @click="onRedeem(r.id)"
+                    >
+                      {{ r.ok ? '兌換' : r.reason }}
+                    </UButton>
+                  </div>
+                </li>
+              </ul>
+
+              <p class="mt-4 text-[11px] leading-relaxed text-ink-faint">
+                點數不得折換現金、找零、轉讓或轉移至其他會員帳號。
+              </p>
             </div>
 
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <CouponCard v-for="c in coupons" :key="c.id" :coupon="c" />
-            </div>
-            <div
-              v-if="!coupons.length"
-              class="mt-4 rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
-            >
-              <img src="/images/art/car-family.webp" alt="" class="mx-auto h-20 w-auto opacity-70">
-              <p class="mt-2 text-sm text-ink-soft">券夾還是空的，出發蓋章就有券</p>
-              <UButton to="/checkin" color="neutral" variant="outline" size="sm" class="mt-3 rounded-full font-bold">
-                去蓋章
-              </UButton>
-            </div>
+            <div>
+              <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-card">
+                <span class="text-sm font-bold">我的券夾</span>
+                <span class="text-sm text-ink-soft">
+                  未使用 <b class="text-lg font-black text-vermilion-500">${{ walletAmount }}</b>
+                </span>
+              </div>
 
-            <p class="mt-4 rounded-2xl bg-paper-soft px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
-              每張券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用，不找零，
-              發券後 {{ CAMPAIGN.couponValidDays }} 天內有效，限雲林合作店家。
-            </p>
+              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <CouponCard v-for="c in coupons" :key="c.id" :coupon="c" />
+              </div>
+              <div
+                v-if="!coupons.length"
+                class="mt-4 rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
+              >
+                <img src="/images/art/car-family.webp" alt="" class="mx-auto h-20 w-auto opacity-70">
+                <p class="mt-2 text-sm text-ink-soft">券夾還是空的，用點數在上方兌換優惠券</p>
+              </div>
+
+              <p class="mt-4 rounded-2xl bg-paper-soft px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
+                每張券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用，不找零，
+                兌換後 {{ CAMPAIGN.couponValidDays }} 天內有效，限雲林合作店家。
+              </p>
+            </div>
           </div>
 
           <!-- 使用紀錄 -->

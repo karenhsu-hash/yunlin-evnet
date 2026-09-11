@@ -72,13 +72,13 @@ export const LOTTERY_WEEKS: LotteryWeek[] = [
 ]
 
 export function useLottery() {
-  const { member, completedStages } = useCampaign()
+  const { member, level } = useCampaign()
 
-  /** 每完成一段任務取得一次抽獎資格，依身分加權 */
-  const perStage = computed(() => ENTRY_RULE[member.value.identity])
-  const myEntries = computed(() => completedStages.value * perStage.value)
+  /** 每達到一個會員等級取得一次抽獎資格，依身分加權 */
+  const perLevel = computed(() => ENTRY_RULE[member.value.identity])
+  const myEntries = computed(() => level.value * perLevel.value)
 
   const currentWeek = computed(() => LOTTERY_WEEKS.find((w) => w.status === 'open')!)
 
-  return { perStage, myEntries, currentWeek, weeks: LOTTERY_WEEKS }
+  return { perLevel, myEntries, currentWeek, weeks: LOTTERY_WEEKS }
 }

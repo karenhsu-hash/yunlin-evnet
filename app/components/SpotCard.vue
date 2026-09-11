@@ -19,21 +19,18 @@ const { isCheckedIn } = useCampaign()
         loading="lazy"
         class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
       >
+      <!-- 等級三指定站才標示；一般站點不需要額外說明 -->
       <span
-        class="absolute inset-x-0 bottom-0 flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold text-white"
-        :class="kindOf(spot.type).pin + '/90'"
+        v-if="isDesignated(spot.id)"
+        class="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-vermilion-500/90 px-1.5 py-1 text-[10px] font-bold text-white"
       >
-        <UIcon :name="spot.icon" class="size-3 shrink-0" />
-        {{ kindOf(spot.type).label }}
+        <UIcon name="i-lucide-flag" class="size-3 shrink-0" />指定站
       </span>
     </div>
 
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-1.5">
-        <span
-          class="chip shrink-0"
-          :class="kindOf(spot.type).chip"
-        >{{ kindOf(spot.type).short }}</span>
+        <UIcon :name="spot.icon" class="size-3.5 shrink-0 text-ink-faint" />
         <span class="text-[11px] text-ink-faint shrink-0">{{ spot.town }}</span>
       </div>
 
@@ -44,11 +41,9 @@ const { isCheckedIn } = useCampaign()
         <span class="flex items-center gap-1">
           <UIcon name="i-lucide-map-pin" class="size-3.5" />{{ spot.distanceKm }} km
         </span>
-        <span v-if="spot.threshold" class="flex items-center gap-1">
-          <UIcon name="i-lucide-coins" class="size-3.5" />需消費滿 {{ spot.threshold }}
-        </span>
-        <span v-else class="flex items-center gap-1">
-          <UIcon name="i-lucide-camera" class="size-3.5" />拍照即完成
+        <span class="flex items-center gap-1">
+          <UIcon :name="hasQr(spot) ? 'i-lucide-scan-line' : 'i-lucide-map-pin-check'" class="size-3.5" />
+          {{ hasQr(spot) ? '掃碼或定位蓋章' : '定位蓋章' }}
         </span>
       </div>
     </div>

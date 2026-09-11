@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RegisterStepKey } from '~/composables/useMember'
 
-const { member, login } = useCampaign()
+const { member, login, resetDemo } = useCampaign()
 const {
   draft, addressInYunlin, identityMismatch,
   emailValid, codeValid, idNoValid, profileValid
@@ -43,27 +43,32 @@ const TAKEN_EMAILS = ['taken@example.com', 'used@example.com']
 const normalizedEmail = computed(() => draft.value.email.trim().toLowerCase())
 const emailTaken = computed(() => TAKEN_EMAILS.includes(normalizedEmail.value))
 
+/**
+ * 寫入會員資料並開通護照。
+ * 新會員一律從等級一（250 點）開始：清掉示範資料留下的章與券，
+ * 否則完成頁說「你已成為啟程會員」，護照卻顯示探索會員。
+ */
+function completeRegistration(lineBound: boolean) {
+  member.value.name = draft.value.name || member.value.name
+  member.value.email = normalizedEmail.value || member.value.email
+  member.value.identity = (draft.value.identity || 'visitor') as 'local' | 'visitor'
+  member.value.lineBound = lineBound
+  resetDemo()
+  login()
+  step.value = 'done'
+}
+
 const lineBinding = ref(false)
 function bindLine() {
   lineBinding.value = true
   setTimeout(() => {
     lineBinding.value = false
-    member.value.name = draft.value.name || member.value.name
-    member.value.email = normalizedEmail.value || member.value.email
-    member.value.identity = (draft.value.identity || 'visitor') as 'local' | 'visitor'
-    member.value.lineBound = true
-    login()
-    step.value = 'done'
+    completeRegistration(true)
   }, 1500)
 }
 
 function skipLine() {
-  member.value.name = draft.value.name || member.value.name
-  member.value.email = normalizedEmail.value || member.value.email
-  member.value.identity = (draft.value.identity || 'visitor') as 'local' | 'visitor'
-  member.value.lineBound = false
-  login()
-  step.value = 'done'
+  completeRegistration(false)
 }
 
 function fillDemo() {
@@ -82,7 +87,7 @@ function fillDemo() {
     <header class="text-center">
       <span class="chip bg-sky-100 text-sky-700">會員註冊</span>
       <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">加入捲動國旅</h1>
-      <p class="mt-2 text-sm text-ink-soft">完成註冊即可開始集章，一個信箱限一組帳號</p>
+      <p class="mt-2 text-sm text-ink-soft">完成註冊即獲得 {{ LEVELS[0]!.reward }} 點，一個信箱限一組帳號</p>
     </header>
 
     <!-- ── 步驟指示 ─────────────────────────────── -->
@@ -369,6 +374,18 @@ function fillDemo() {
           <UIcon name="i-lucide-party-popper" class="size-16 text-vermilion-500" />
           <h2 class="mt-3 text-2xl font-black sm:text-3xl">註冊完成</h2>
           <p class="mt-1.5 text-xs text-ink-soft">護照已開通，現在就出發蓋下第一枚章</p>
+
+          <!-- 註冊即是等級一 -->
+          <div class="mx-auto mt-5 inline-flex items-center gap-3 rounded-2xl bg-marigold-500 px-5 py-3 text-left text-ink shadow-card">
+            <UIcon name="i-lucide-coins" class="size-7 shrink-0" />
+            <div>
+              <p class="text-[11px] font-bold text-ink/70">等級一 ‧ {{ LEVELS[0]!.name }}</p>
+              <p class="text-lg font-black leading-tight">獲得 {{ LEVELS[0]!.reward }} 點</p>
+            </div>
+          </div>
+          <p class="mt-3 text-[11px] text-ink-soft">
+            再蓋 {{ LEVEL_TWO_CHECKINS }} 枚章，升級為{{ LEVELS[1]!.name }}並再獲得 {{ LEVELS[1]!.reward }} 點
+          </p>
         </div>
 
         <dl class="divide-y divide-paper-deep px-5 sm:px-7">
@@ -390,11 +407,11 @@ function fillDemo() {
       </div>
 
       <div class="mt-5 flex flex-wrap gap-3">
-        <UButton to="/events" color="neutral" variant="outline" size="lg" class="flex-1 rounded-full font-bold">
-          看景點
+        <UButton to="/member" color="neutral" variant="outline" size="lg" icon="i-lucide-book-marked" class="flex-1 rounded-full font-bold">
+          看我的護照
         </UButton>
-        <UButton to="/checkin" color="primary" size="lg" icon="i-lucide-qr-code" class="flex-1 rounded-full font-bold">
-          開始打卡
+        <UButton to="/checkin" color="primary" size="lg" icon="i-lucide-stamp" class="flex-1 rounded-full font-bold">
+          開始蓋章
         </UButton>
       </div>
     </section>

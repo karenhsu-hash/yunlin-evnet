@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Coupon, Spot } from '~/composables/useCampaign'
+import type { Level, Spot } from '~/composables/useCampaign'
 
 /**
  * 打卡有兩種方式：
@@ -10,7 +10,7 @@ import type { Coupon, Spot } from '~/composables/useCampaign'
  * hasQr 為 false 的站點只提供定位打卡，選到時自動切過去，掃碼那個分頁會被停用。
  */
 const route = useRoute()
-const { isLoggedIn, member, completedStages, nextNeed, isCheckedIn, spotById, checkIn } = useCampaign()
+const { isLoggedIn, member, isCheckedIn, spotById, checkIn } = useCampaign()
 
 type Method = 'qr' | 'geo'
 type Phase = 'idle' | 'scanning' | 'locating' | 'done'
@@ -31,8 +31,8 @@ const method = ref<Method>(target.value && !hasQr(target.value) ? 'geo' : 'qr')
 const result = ref<{
   ok: boolean
   duplicated: boolean
-  newStage: number | null
-  coupon: Coupon | null
+  /** 這一章剛好讓會員升級時，升到哪一級 */
+  levelUp: Level | null
 } | null>(null)
 
 /** 定位打卡的狀態機。far＝有拿到座標但距離不夠近，error＝根本沒拿到座標 */
@@ -60,6 +60,13 @@ watch(target, (t) => {
   if (t && !hasQr(t)) method.value = 'geo'
 })
 
+/** 快速挑站：還沒蓋的站點，指定站排前面（升等級三要蓋的） */
+const pickList = computed(() =>
+  ALL_SPOTS.filter((s) => !isCheckedIn(s.id))
+    .sort((a, b) => Number(isDesignated(b.id)) - Number(isDesignated(a.id)))
+    .slice(0, 8)
+)
+
 function pickSpot(): Spot {
   const todo = ALL_SPOTS.filter((s) => !isCheckedIn(s.id))
   const pool = todo.length ? todo : ALL_SPOTS
@@ -69,10 +76,10 @@ function pickSpot(): Spot {
 let timers: ReturnType<typeof setTimeout>[] = []
 onUnmounted(() => timers.forEach(clearTimeout))
 
-/** 寫入打卡紀錄（兩種方式共用），回傳是否剛好觸發新的一段任務 */
+/** 寫入打卡紀錄（兩種方式共用），並記下這一章是否剛好讓會員升級 */
 function finish(spot: Spot) {
   const duplicated = isCheckedIn(spot.id)
-  const outcome = duplicated ? { newStage: null, coupon: null } : checkIn(spot.id)
+  const outcome = duplicated ? { levelUp: null } : checkIn(spot.id)
   result.value = { ok: true, duplicated, ...outcome }
   phase.value = 'done'
 }
@@ -303,18 +310,15 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
           <!-- 目標站點 -->
           <div v-if="target" class="mt-4 card p-4 animate-pop-in">
             <div class="flex items-center gap-3">
-              <span
-                class="grid place-items-center size-12 shrink-0 rounded-2xl"
-                :class="kindOf(target.type).soft"
-              >
+              <span class="grid place-items-center size-12 shrink-0 rounded-2xl bg-vermilion-50 text-vermilion-600">
                 <UIcon :name="target.icon" class="size-6" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="text-[11px] text-ink-faint">即將蓋章</p>
                 <p class="font-bold truncate">{{ target.name }}</p>
               </div>
-              <span class="chip shrink-0" :class="kindOf(target.type).chip">
-                {{ kindOf(target.type).label }}
+              <span v-if="isDesignated(target.id)" class="chip shrink-0 bg-vermilion-100 text-vermilion-700">
+                <UIcon name="i-lucide-flag" class="size-3" />指定站
               </span>
             </div>
 
@@ -384,7 +388,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
           </button>
 
           <p class="mt-3 text-center text-[11px] leading-relaxed text-ink-faint">
-            {{ SPOT_KIND.experience.label }}請先消費滿 {{ CAMPAIGN.minSpend }} 元再蓋章，{{ SPOT_KIND.highlight.label }}拍張照就完成
+            到了現場就能蓋章，每一站限蓋一枚
           </p>
         </template>
 
@@ -405,25 +409,15 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
           </div>
 
           <div v-else class="card overflow-hidden animate-pop-in">
-            <div
-              class="px-6 py-10 text-center"
-              :class="target.type === 'experience' ? 'bg-vermilion-50' : 'bg-moss-50'"
-            >
-              <UIcon
-                name="i-lucide-circle-check-big"
-                class="size-16"
-                :class="target.type === 'experience' ? 'text-vermilion-500' : 'text-moss-500'"
-              />
+            <div class="bg-vermilion-50 px-6 py-10 text-center">
+              <UIcon name="i-lucide-circle-check-big" class="size-16 text-vermilion-500" />
               <h2 class="mt-3 text-2xl font-black sm:text-3xl">蓋章成功！</h2>
               <p class="mt-1.5 text-xs text-ink-soft">已蓋進你的旅遊護照</p>
             </div>
 
             <div class="p-5 sm:p-6">
               <div class="flex items-center gap-3">
-                <span
-                  class="grid place-items-center size-12 shrink-0 rounded-2xl"
-                  :class="kindOf(target.type).soft"
-                >
+                <span class="grid place-items-center size-12 shrink-0 rounded-2xl bg-vermilion-50 text-vermilion-600">
                   <UIcon :name="target.icon" class="size-6" />
                 </span>
                 <div class="min-w-0">
@@ -434,9 +428,9 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
               <dl class="mt-4 grid grid-cols-2 gap-2.5 text-[11px]">
                 <div class="rounded-2xl bg-paper-soft px-3 py-2.5">
-                  <dt class="text-ink-faint">站點類型</dt>
+                  <dt class="text-ink-faint">站點</dt>
                   <dd class="mt-0.5 font-bold">
-                    {{ kindOf(target.type).label }} ‧ {{ kindOf(target.type).short }}
+                    {{ isDesignated(target.id) ? `${LEVELS[2]!.name}指定站` : '一般站點' }}
                   </dd>
                 </div>
                 <div class="rounded-2xl bg-paper-soft px-3 py-2.5">
@@ -447,18 +441,18 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
             </div>
           </div>
 
-          <!-- 觸發發券 -->
-          <div v-if="result.coupon" class="mt-4 rounded-card bg-marigold-500 p-5 shadow-pop animate-pop-in">
-            <div class="text-center">
-              <UIcon name="i-lucide-party-popper" class="size-9 text-ink" />
-              <p class="mt-1.5 font-black text-ink">
-                完成第 {{ result.newStage }} 段任務，優惠券已自動入袋
-              </p>
-              <p class="mt-0.5 text-[11px] text-ink/70">已存進你的券包</p>
-            </div>
-            <div class="mt-4">
-              <CouponCard :coupon="result.coupon" />
-            </div>
+          <!-- 這一章剛好升級 -->
+          <div v-if="result.levelUp" class="mt-4 rounded-card bg-marigold-500 p-5 text-center shadow-pop animate-pop-in">
+            <UIcon name="i-lucide-party-popper" class="size-9 text-ink" />
+            <p class="mt-1.5 text-lg font-black text-ink">
+              升級為{{ result.levelUp.name }}，獲得 {{ result.levelUp.reward }} 點
+            </p>
+            <p class="mt-0.5 text-[11px] text-ink/70">
+              累積 {{ toComma(result.levelUp.total) }} 點，可到護照的點數兌換專區換優惠券
+            </p>
+            <UButton to="/member" color="neutral" variant="solid" size="sm" class="mt-3 rounded-full font-bold" trailing-icon="i-lucide-chevron-right">
+              去兌換
+            </UButton>
           </div>
 
           <div class="mt-5 flex flex-wrap gap-3">
@@ -477,23 +471,8 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
         <div class="card p-5 sm:p-6">
           <h2 class="text-lg font-black">我的護照</h2>
           <div class="mt-4">
-            <StageProgress :completed="completedStages" />
+            <LevelProgress />
           </div>
-
-          <p v-if="nextNeed" class="mt-4 rounded-2xl bg-paper-soft px-3.5 py-3 text-xs text-ink-soft sm:text-sm">
-            再打
-            <b v-if="nextNeed.needExperience" class="text-vermilion-600">{{ nextNeed.needExperience }} 個{{ SPOT_KIND.experience.label }}</b>
-            <template v-if="nextNeed.needExperience && nextNeed.needHighlight"> ＋ </template>
-            <b v-if="nextNeed.needHighlight" class="text-moss-600">{{ nextNeed.needHighlight }} 個{{ SPOT_KIND.highlight.label }}</b>
-            ，即可解鎖 <b class="text-marigold-700">{{ nextNeed.reward }} 元</b>優惠券
-          </p>
-          <p
-            v-else
-            class="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-marigold-100 px-3.5 py-3 text-xs font-bold text-marigold-700"
-          >
-            <UIcon name="i-lucide-party-popper" class="size-4" />
-            三段任務全部完成，共領取 {{ toComma(CAMPAIGN.quota) }} 元
-          </p>
         </div>
 
         <div v-if="phase === 'idle'" class="card p-5 sm:p-6">
@@ -502,21 +481,20 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
           <div class="mt-4 grid gap-2.5 sm:grid-cols-2">
             <button
-              v-for="spot in ALL_SPOTS.filter((s) => !isCheckedIn(s.id)).slice(0, 8)"
+              v-for="spot in pickList"
               :key="spot.id"
               class="flex items-center gap-2.5 rounded-2xl border-2 bg-white px-3 py-2.5 text-left transition-colors"
               :class="target?.id === spot.id ? 'border-ink' : 'border-paper-deep hover:border-ink-faint'"
               @click="target = spot"
             >
-              <span
-                class="grid place-items-center size-9 shrink-0 rounded-xl"
-                :class="kindOf(spot.type).soft"
-              >
+              <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-vermilion-50 text-vermilion-600">
                 <UIcon :name="spot.icon" class="size-5" />
               </span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-xs font-bold">{{ spot.name }}</span>
-                <span class="block text-[10px] text-ink-faint">{{ spot.town }}</span>
+                <span class="block text-[10px] text-ink-faint">
+                  {{ spot.town }}<template v-if="isDesignated(spot.id)"> ‧ 指定站</template>
+                </span>
               </span>
             </button>
           </div>

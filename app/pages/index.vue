@@ -18,7 +18,7 @@ const brandPoints = [
   {
     icon: 'i-lucide-mountain-snow',
     title: '走進雲林的日常',
-    desc: '從北港廟口的香火、西螺老街的醬油香，到古坑山上的咖啡園與濁水溪出海口的落日 —— 20 個亮點串成一條可以慢慢走的路線。'
+    desc: `從北港廟口的香火、西螺老街的醬油香，到古坑山上的咖啡園與濁水溪出海口的落日 —— ${ALL_SPOTS.length} 個亮點串成一條可以慢慢走的路線。`
   },
   {
     icon: 'i-lucide-hand-coins',
@@ -28,29 +28,29 @@ const brandPoints = [
   {
     icon: 'i-lucide-route',
     title: '走得越深，拿得越多',
-    desc: '沿著路線一站一站集章，最高帶走 1,000 元優惠券，在合作店家直接折抵。'
+    desc: `解任務越多，能兌換的優惠價值越高。完成所有指定打卡任務，累積最高 ${toComma(CAMPAIGN.quota)} 點。`
   }
 ]
 
-/** 怎麼玩：自動輪播的三個步驟 */
+/** 怎麼玩：自動輪播的三個步驟，對應三個會員等級 */
 const steps = [
   {
-    key: 'scan',
-    icon: 'i-lucide-qr-code',
-    title: '領取旅遊護照',
-    desc: '登入後選一條遊樂路線，護照就開通了。'
+    key: 'join',
+    icon: 'i-lucide-book-marked',
+    title: `註冊領 ${LEVELS[0]!.reward} 點`,
+    desc: '完成會員註冊就開通觀光護照，成為啟程會員。'
   },
   {
-    key: 'point',
-    icon: 'i-lucide-circle-dot',
-    title: '沿途集章',
-    desc: '每到一站掃碼或定位，就在護照上蓋一枚章。'
+    key: 'stamp',
+    icon: 'i-lucide-stamp',
+    title: '打卡升級',
+    desc: '到站點現場掃碼或定位蓋章，蓋得越多、等級越高、點數越多。'
   },
   {
-    key: 'coupon',
-    icon: 'i-lucide-ticket',
-    title: '優惠券入袋',
-    desc: '集滿指定章數立刻發券，直接進你的券包。'
+    key: 'redeem',
+    icon: 'i-lucide-gift',
+    title: '點數兌換優惠',
+    desc: '在護照的兌換專區用點數換優惠券，到合作店家直接折抵。'
   }
 ]
 
@@ -80,9 +80,15 @@ function scrollToContent() {
 
 const faqItems = [
   { label: '優惠券怎麼用？', content: '到指定店家出示優惠券即可兌換。' },
-  { label: '每人最多可以領多少？', content: `三段任務合計 ${toComma(CAMPAIGN.quota)} 元，這是每人上限。` },
-  { label: '券的有效期多久？', content: `發券後 ${CAMPAIGN.couponValidDays} 天內，且不超過活動結束日 ${CAMPAIGN.endDate}。` },
-  { label: '三段一定要分天完成嗎？', content: '不用，同一天也可以連續跑完三段。' },
+  {
+    label: '點數怎麼拿？',
+    content: `註冊即得 ${LEVELS[0]!.reward} 點；任意 ${LEVEL_TWO_CHECKINS} 站打卡升級為${LEVELS[1]!.name}，再得 ${LEVELS[1]!.reward} 點；首推路線 ${DESIGNATED_SPOT_IDS.length} 個指定站全部打卡升級為${LEVELS[2]!.name}，再得 ${LEVELS[2]!.reward} 點，最高累積 ${toComma(CAMPAIGN.quota)} 點。`
+  },
+  {
+    label: '點數怎麼用？',
+    content: '到「我的護照」的兌換專區換優惠券。兌換會扣除點數，但不影響已取得的會員等級。點數不得折換現金、找零或轉讓。'
+  },
+  { label: '券的有效期多久？', content: `兌換後 ${CAMPAIGN.couponValidDays} 天內，且不超過活動結束日 ${CAMPAIGN.endDate}。` },
   { label: '哪裡可以使用優惠券？', content: `全縣約 ${CAMPAIGN.storeCount} 家合作店家，小吃、伴手禮、餐廳、咖啡、體驗與住宿都有。` }
 ]
 </script>
@@ -210,7 +216,7 @@ const faqItems = [
         <div v-for="s in [
           { k: '活動亮點', v: `${ALL_SPOTS.length} 處` },
           { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` },
-          { k: '最高回饋', v: `${toComma(CAMPAIGN.quota)} 元` }
+          { k: '最高累積', v: `${toComma(CAMPAIGN.quota)} 點` }
         ]" :key="s.k" class="px-3 text-center">
           <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
           <dd class="mt-1 text-2xl font-black text-ink sm:text-3xl">{{ s.v }}</dd>
@@ -230,7 +236,7 @@ const faqItems = [
 
     <!-- ══ 怎麼玩：一到三，由左至右 ═══════════════ -->
     <section class="container-page pt-12 sm:pt-16">
-      <SectionHead title="怎麼玩" sub="領取護照，沿途集章，優惠券入袋" />
+      <SectionHead title="怎麼玩" sub="註冊領點，打卡升級，點數兌換" />
 
       <div
         class="relative mt-8"
@@ -270,6 +276,48 @@ const faqItems = [
           </li>
         </ol>
       </div>
+    </section>
+
+    <!-- ══ 會員等級：客戶提供的等級表 ＋ 簡短版文案 ═══ -->
+    <section class="container-page pt-12 sm:pt-16">
+      <SectionHead title="會員等級" sub="會員等級將依任務完成進度提升，不同等級可獲得對應的點數獎勵，並使用點數兌換優惠。" />
+
+      <!-- 手機上五欄放不下，讓表格自己橫向捲動，頁面本身不溢出 -->
+      <div class="mt-5 overflow-x-auto rounded-card bg-white shadow-card">
+        <table class="w-full min-w-[640px] text-left text-sm">
+          <thead>
+            <tr class="border-b-2 border-paper-deep text-xs text-ink-faint">
+              <th class="px-5 py-3 font-bold">會員等級</th>
+              <th class="px-5 py-3 font-bold">升級條件</th>
+              <th class="px-5 py-3 text-right font-bold">點數獎勵</th>
+              <th class="px-5 py-3 text-right font-bold">累積可用點數</th>
+              <th class="px-5 py-3 text-right font-bold">可兌換優惠價值</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-paper-deep">
+            <tr v-for="l in LEVELS" :key="l.level">
+              <td class="px-5 py-3.5">
+                <span class="text-xs font-bold text-ink-faint">等級{{ ['一', '二', '三'][l.level - 1] }}｜</span>
+                <b>{{ l.name }}</b>
+              </td>
+              <td class="px-5 py-3.5 text-ink-soft">{{ l.condition }}</td>
+              <td class="px-5 py-3.5 text-right tabular-nums">{{ l.level === 1 ? '' : '再獲得 ' }}{{ l.reward }} 點</td>
+              <td class="px-5 py-3.5 text-right font-bold tabular-nums">{{ toComma(l.total) }} 點</td>
+              <td class="px-5 py-3.5 text-right font-black tabular-nums text-marigold-700">最高 {{ toComma(l.total) }} 點</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-4 text-sm leading-relaxed text-ink-soft">
+        註冊成為會員，即可獲得 {{ LEVELS[0]!.reward }} 點並開啟觀光護照。完成兩個行程打卡任務，可升級至等級二並累積
+        {{ LEVELS[1]!.total }} 點；完成所有指定打卡任務，即可升級至等級三，累積最高 {{ toComma(LEVELS[2]!.total) }} 點。
+        會員可使用點數兌換各等級專屬優惠，解任務越多，能兌換的優惠價值越高。
+      </p>
+      <p class="mt-2 flex items-start gap-1.5 text-xs text-ink-faint">
+        <UIcon name="i-lucide-flag" class="mt-px size-3.5 shrink-0 text-vermilion-500" />
+        指定打卡任務為首推路線「{{ (ROUTES.find((r) => r.featured) ?? ROUTES[0]!).name }}」的 {{ DESIGNATED_SPOT_IDS.length }} 個站點。
+      </p>
     </section>
 
     <!-- ══ 遊樂路線：文字頁籤 ＋ A→B→C 動線 ═══════ -->
@@ -332,7 +380,7 @@ const faqItems = [
                       : 'border-paper-deep bg-white text-ink hover:border-ink/40'"
                   >
                     <UIcon
-                      :name="checkedIn.includes(id) ? 'i-lucide-check' : kindOf(spotOf(id)!.type).icon"
+                      :name="checkedIn.includes(id) ? 'i-lucide-check' : isDesignated(id) ? 'i-lucide-flag' : spotOf(id)!.icon"
                       class="size-3.5 shrink-0"
                     />
                     {{ spotOf(id)?.name }}
@@ -344,13 +392,9 @@ const faqItems = [
         </div>
 
         <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-paper-deep pt-4">
-          <span
-            v-for="k in (['experience', 'highlight'] as const)"
-            :key="k"
-            class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft"
-          >
-            <i class="size-2 rounded-full not-italic" :class="SPOT_KIND[k].dot" />
-            {{ SPOT_KIND[k].label }} ‧ {{ SPOT_KIND[k].short }}
+          <span class="flex items-center gap-1.5 text-[11px] font-bold text-ink-soft">
+            <UIcon name="i-lucide-flag" class="size-3.5 text-vermilion-500" />
+            {{ LEVELS[2]!.name }}指定站
           </span>
           <NuxtLink
             to="/events"

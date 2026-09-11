@@ -10,14 +10,14 @@ definePageMeta({ layout: 'admin' })
 const weekId = ref('w4')
 const week = computed(() => LOTTERY_WEEKS.find((w) => w.id === weekId.value)!)
 
-/** 資格條件：至少完成幾段任務 */
-const minStages = ref(1)
+/** 資格條件：最低會員等級 */
+const minLevel = ref<1 | 2 | 3>(1)
 
 const eligibleCount = computed(() =>
-  Math.round(week.value.eligible * (minStages.value === 1 ? 1 : minStages.value === 2 ? 0.62 : 0.34))
+  Math.round(week.value.eligible * (minLevel.value === 1 ? 1 : minLevel.value === 2 ? 0.62 : 0.34))
 )
 const entryCount = computed(() =>
-  Math.round(week.value.entries * (minStages.value === 1 ? 1 : minStages.value === 2 ? 0.65 : 0.38))
+  Math.round(week.value.entries * (minLevel.value === 1 ? 1 : minLevel.value === 2 ? 0.65 : 0.38))
 )
 
 const generating = ref(false)
@@ -29,7 +29,7 @@ interface WinnerRow {
   /** 註冊時驗證過的信箱；註冊流程已不收手機，寄送前需另行索取聯絡電話 */
   email: string
   identity: 'local' | 'visitor'
-  stages: number
+  level: 1 | 2 | 3
   prize: string
   address: string
 }
@@ -56,7 +56,7 @@ function generate() {
           name: `${s}＊＊`,
           email: `${'abcdefghijk'[(no + i) % 11]}***${String(100 + ((no * 37) % 900))}@${MAIL_HOSTS[(no + i) % MAIL_HOSTS.length]}`,
           identity: isLocal ? 'local' : 'visitor',
-          stages: 3 - ((no + i) % 2),
+          level: (3 - ((no + i) % 2)) as 2 | 3,
           prize: p.name,
           address: `${CITIES[(no + i) % CITIES.length]}＊＊＊`
         })
@@ -71,11 +71,11 @@ function generate() {
 
 function exportWinners() {
   downloadCsv(`中獎名單_${week.value.label}.csv`, [
-    ['序號', '姓名', '信箱', '身分', '完成段數', '獎項', '寄送地址'],
+    ['序號', '姓名', '信箱', '身分', '會員等級', '獎項', '寄送地址'],
     ...winners.value.map((w) => [
       w.no, w.name, w.email,
       w.identity === 'local' ? '雲林在地' : '外地旅客',
-      w.stages, w.prize, w.address
+      LEVELS[w.level - 1]!.name, w.prize, w.address
     ])
   ])
 }
@@ -116,11 +116,11 @@ const physicalCount = computed(
             <label class="text-xs font-bold text-ink-soft">資格門檻</label>
             <div class="mt-1.5 flex gap-1.5">
               <button
-                v-for="n in 3" :key="n"
+                v-for="l in LEVELS" :key="l.level"
                 class="flex-1 rounded-2xl border-2 py-2.5 text-xs font-bold transition-colors"
-                :class="minStages === n ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
-                @click="minStages = n"
-              >完成 {{ n }} 段以上</button>
+                :class="minLevel === l.level ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
+                @click="minLevel = l.level"
+              >{{ l.name }}以上</button>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ const physicalCount = computed(
         <!-- 加權規則說明 -->
         <div class="mt-3 rounded-2xl bg-sky-50 px-3 py-2.5">
           <p class="text-[11px] leading-relaxed text-sky-700">
-            抽獎次數加權：外地旅客每段 ×{{ ENTRY_RULE.visitor }}、雲林在地每段 ×{{ ENTRY_RULE.local }}。
+            抽獎次數加權：外地旅客每一等級 ×{{ ENTRY_RULE.visitor }}、雲林在地每一等級 ×{{ ENTRY_RULE.local }}。
             主獎勵條件對兩者一致，差異僅反映於此。
           </p>
         </div>
@@ -192,7 +192,7 @@ const physicalCount = computed(
                 <th class="py-2 pr-3 font-bold">姓名</th>
                 <th class="py-2 pr-3 font-bold">信箱</th>
                 <th class="py-2 pr-3 font-bold">身分</th>
-                <th class="py-2 pr-3 text-right font-bold">段數</th>
+                <th class="py-2 pr-3 font-bold">等級</th>
                 <th class="py-2 pr-3 font-bold">獎項</th>
                 <th class="py-2 font-bold">寄送地址</th>
               </tr>
@@ -208,7 +208,7 @@ const physicalCount = computed(
                     :class="w.identity === 'local' ? 'bg-moss-100 text-moss-700' : 'bg-sky-100 text-sky-700'"
                   >{{ w.identity === 'local' ? '在地' : '外地' }}</span>
                 </td>
-                <td class="py-2 pr-3 text-right tabular-nums">{{ w.stages }}</td>
+                <td class="py-2 pr-3">{{ LEVELS[w.level - 1]!.name }}</td>
                 <td class="py-2 pr-3">{{ w.prize }}</td>
                 <td class="py-2 text-ink-soft">{{ w.address }}</td>
               </tr>

@@ -56,7 +56,7 @@ withDefaults(
           >
             {{ coupon.status === 'unused' ? '可使用' : coupon.status === 'used' ? '已核銷' : '已過期' }}
           </span>
-          <span class="text-[10px] text-ink-faint">第 {{ coupon.stage }} 段任務</span>
+          <span class="text-[10px] text-ink-faint">{{ coupon.value }} 點兌換</span>
         </div>
 
         <p class="mt-1.5 font-mono text-[13px] font-bold tracking-widest text-ink">

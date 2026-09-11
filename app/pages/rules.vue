@@ -24,7 +24,7 @@ const chapters: Chapter[] = [
     title: '活動期間',
     items: [
       { text: `活動期間自 <b>${CAMPAIGN.startDate}</b> 起至 <b>${CAMPAIGN.endDate}</b> 止，為期二個月。` },
-      { text: `優惠券之使用期限為發券後 <b>${CAMPAIGN.couponValidDays} 天</b>內，且不得超過活動結束日。` },
+      { text: `優惠券之使用期限為兌換後 <b>${CAMPAIGN.couponValidDays} 天</b>內，且不得超過活動結束日。` },
       { text: '活動期間內，主辦單位得視實際執行情形調整活動內容，並於官方網站公告。' }
     ]
   },
@@ -42,14 +42,14 @@ const chapters: Chapter[] = [
         ]
       },
       { text: '兩種身分之<b>獎勵條件完全相同</b>，身分別僅供活動統計與成效分析之用。' },
-      { text: '本活動採<b>一人一帳號</b>控管，以電子郵件信箱及身分證字號進行識別，重複註冊者不予發券。' },
+      { text: '本活動採<b>一人一帳號</b>控管，以電子郵件信箱及身分證字號進行識別，重複註冊者不予發放點數。' },
       { text: '填報資料不實者，主辦單位得取消其參加與中獎資格。' }
     ]
   },
   {
     id: 'mission',
     no: '三',
-    title: '活動機制：遊樂路線與三段任務',
+    title: '活動機制：遊樂路線與打卡任務',
     intro: `本活動規劃 ${ROUTES.length} 條遊樂路線，引導旅客照行程走訪雲林各觀光亮點，並將消費留在在地合作店家。`,
     items: [
       {
@@ -57,35 +57,34 @@ const chapters: Chapter[] = [
         subs: ROUTES.map((r) => `${r.name}：${r.tagline}`)
       },
       { text: '路線僅為建議動線，<b>不限定走訪順序</b>，亦不限定僅能完成單一路線。' },
+      { text: `活動站點共 <b>${ALL_SPOTS.length} 處</b>，每一站點之打卡即為一項行程打卡任務。` },
       {
-        text: `活動站點共 <b>${ALL_SPOTS.length} 處</b>，分為兩類：`,
+        text: '打卡方式分為兩種，系統均擷取所在位置並與站點座標比對，確認到訪後記入該會員之護照：',
         subs: [
-          `${SPOT_KIND.experience.label}（可消費站點）${EXPERIENCE_SPOTS.length} 處：老街、商圈、觀光工廠與食農食漁體驗等，須於現場消費滿 ${CAMPAIGN.minSpend} 元。`,
-          `${SPOT_KIND.highlight.label}（不可消費站點）${HIGHLIGHT_SPOTS.length} 處：步道、濕地、風景區等，以拍照打卡完成。`
+          '掃碼打卡：掃描站點現場設置之專屬 QR code。',
+          '定位打卡：步道、濕地等開放場域未設置 QR code，於現場以定位確認抵達。'
         ]
       },
-      { text: '每一景點於現場設置專屬 QR code。旅客掃碼時，系統擷取所在位置並與景點座標比對，確認到訪後記入該會員之任務進度。' },
-      { text: '<b>同一會員於同一景點僅計算一次</b>，重複掃碼不重複計入。' },
+      { text: '<b>同一會員於同一站點僅計算一次</b>，重複打卡不重複計入。' },
       {
-        text: `完成「一個${SPOT_KIND.experience.label} ＋ 一個${SPOT_KIND.highlight.label}」為一組，共分三段解鎖獎勵：`,
-        subs: [
-          '第一段（體驗 ＋ 亮點）：優惠券 250 元',
-          '第二段（體驗 ＋ 亮點）：優惠券 250 元',
-          '第三段（體驗 ＋ 亮點）：優惠券 500 元'
-        ]
-      },
-      { text: `三段合計 <b>${toComma(CAMPAIGN.quota)} 元</b>，為每人可領取之上限。` },
-      { text: '各階段之完成間隔不限，同一日內連續完成三段亦可。' }
+        text: `「指定打卡任務」為首推路線「${(ROUTES.find((r) => r.featured) ?? ROUTES[0]!).name}」之 <b>${DESIGNATED_SPOT_IDS.length} 個站點</b>，於站點列表與地圖上以旗標標示。`
+      }
     ]
   },
   {
-    id: 'issue',
+    id: 'level',
     no: '四',
-    title: '優惠券發放',
+    title: '會員等級與點數',
+    intro: '會員等級將依任務完成進度提升，不同等級可獲得對應的點數獎勵，並使用點數兌換優惠。',
     items: [
-      { text: '完成各階段條件後，系統<b>即時自動核發</b>對應面額之優惠券，不另設審核程序。' },
-      { text: '優惠券直接存入旅遊護照之券夾，並以 Email 及 LINE 官方帳號通知。' },
-      { text: `每人累計發放上限為 ${toComma(CAMPAIGN.quota)} 元，達上限後不再發放。` }
+      { text: `完成會員註冊後，即成為等級一「${LEVELS[0]!.name}」，系統將發放 <b>${LEVELS[0]!.reward} 點</b>。` },
+      { text: `完成 ${LEVEL_TWO_CHECKINS} 個行程打卡任務後，升級為等級二「${LEVELS[1]!.name}」，並再獲得 <b>${LEVELS[1]!.reward} 點</b>。` },
+      { text: `完成所有指定打卡任務後，升級為等級三「${LEVELS[2]!.name}」，並再獲得 <b>${LEVELS[2]!.reward} 點</b>。` },
+      { text: `每人累積點數最高為 <b>${toComma(CAMPAIGN.quota)} 點</b>。點數僅於升級時發放，打卡本身不另計點。` },
+      { text: '會員可於優惠兌換專區，使用點數兌換符合目前等級的優惠。' },
+      { text: '優惠兌換後將扣除相應點數，但<b>不影響已取得的會員等級</b>。' },
+      { text: '各項優惠的使用期限、適用店家及使用條件，以優惠券頁面說明為準。' },
+      { text: '點數<b>不得折換現金、找零、轉讓</b>或轉移至其他會員帳號。' }
     ]
   },
   {
@@ -93,6 +92,7 @@ const chapters: Chapter[] = [
     no: '五',
     title: '優惠券使用規則',
     items: [
+      { text: '優惠券以點數於兌換專區兌換取得，兌換後直接存入旅遊護照之券夾。' },
       { text: '優惠券面額分為 <b>250 元</b>與 <b>500 元</b>兩種。' },
       { text: `每次消費須達 <b>${CAMPAIGN.minSpend} 元</b>以上方可使用優惠券折抵；500 元券亦適用相同門檻，不分級距。` },
       { text: '優惠券<b>不找零</b>。消費金額未達券面額者，差額不予退還；超過部分由消費者自行支付。' },
@@ -246,7 +246,7 @@ onMounted(() => {
           <!-- 頁尾行動 -->
           <div class="mt-4 rounded-card bg-paper-soft p-6 text-center sm:p-8">
             <h2 class="text-lg font-black sm:text-xl">看完了，出發吧</h2>
-            <p class="mt-1.5 text-sm text-ink-soft">走訪五條遊樂路線，最高帶走 {{ toComma(CAMPAIGN.quota) }} 元優惠券。</p>
+            <p class="mt-1.5 text-sm text-ink-soft">註冊即得 {{ LEVELS[0]!.reward }} 點，打卡升級最高累積 {{ toComma(CAMPAIGN.quota) }} 點。</p>
             <div class="mt-5 flex flex-wrap justify-center gap-3">
               <UButton to="/register" color="primary" size="lg" icon="i-lucide-user-plus" class="rounded-full font-bold">
                 馬上參加

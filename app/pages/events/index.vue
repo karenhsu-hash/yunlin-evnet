@@ -2,9 +2,8 @@
 /**
  * 活動景點 —— 以「遊樂路線」為主結構。
  *
- * 前一版是紅點／綠點的顏色分類（紅配綠湊組合）。改成遊樂路線之後，旅客的心智模型
- * 是「今天走哪一條」，不是「我還缺一個綠」，所以頁籤改成路線，站點類型退居為
- * 每一站的角色標籤（體驗站／亮點站），名稱與配色統一由 SPOT_KIND 提供。
+ * 旅客的心智模型是「今天走哪一條」，所以頁籤是路線。站點不再分類型；
+ * 唯一需要標出來的是等級三的指定站（圖釘外加旗標），讓人知道升級要蓋哪幾站。
  *
  * 路線只是建議動線，不綁定走訪順序 —— 強制順序會被 GPS 誤差與臨時改行程打爆。
  */
@@ -60,7 +59,7 @@ watch(activeRouteId, () => {
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/85 to-paper/30" />
 
       <div class="container-page py-10">
-        <span class="chip bg-vermilion-500 text-white">{{ ROUTES.length }} 條路線 ‧ 三段解鎖</span>
+        <span class="chip bg-vermilion-500 text-white">{{ ROUTES.length }} 條路線 ‧ 打卡升級</span>
         <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">活動景點</h1>
         <p class="mt-2 max-w-lg text-sm text-ink-soft sm:text-base">
           選一條路線走一趟，{{ ALL_SPOTS.length }} 個站點串起雲林的海味、田野與山線。
@@ -134,7 +133,7 @@ watch(activeRouteId, () => {
                     @click="activePin = activePin === id ? null : id"
                   >
                     <UIcon
-                      :name="isCheckedIn(id) ? 'i-lucide-check' : kindOf(spotOf(id)!.type).icon"
+                      :name="isCheckedIn(id) ? 'i-lucide-check' : isDesignated(id) ? 'i-lucide-flag' : spotOf(id)!.icon"
                       class="size-3.5 shrink-0"
                     />
                     {{ spotOf(id)?.name }}
@@ -187,15 +186,16 @@ watch(activeRouteId, () => {
                 :aria-label="spot.name"
                 @click="activePin = activePin === spot.id ? null : spot.id"
               >
+                <!-- 指定站用主色＋旗標，一般站點用靛藍；顏色之外還有圖示與圖例，不單靠顏色辨識 -->
                 <span
                   v-if="!isCheckedIn(spot.id)"
                   class="absolute size-7 rounded-full animate-ping-ring"
-                  :class="kindOf(spot.type).pin"
+                  :class="isDesignated(spot.id) ? 'bg-vermilion-500' : 'bg-indigoink-500'"
                 />
                 <span
                   class="relative grid place-items-center size-9 rounded-full border-2 border-white text-white shadow-card"
                   :class="[
-                    kindOf(spot.type).pin,
+                    isDesignated(spot.id) ? 'bg-vermilion-500' : 'bg-indigoink-500',
                     activePin === spot.id ? 'ring-4 ring-white/70 scale-110' : ''
                   ]"
                 >
@@ -205,20 +205,18 @@ watch(activeRouteId, () => {
                   </span>
                   <UIcon
                     v-else
-                    :name="isCheckedIn(spot.id) ? 'i-lucide-check' : spot.icon"
+                    :name="isCheckedIn(spot.id) ? 'i-lucide-check' : isDesignated(spot.id) ? 'i-lucide-flag' : spot.icon"
                     class="size-4.5"
                   />
                 </span>
               </button>
 
               <div class="absolute bottom-3 left-3 flex flex-col gap-1 rounded-2xl bg-white/85 px-3 py-2 backdrop-blur">
-                <span
-                  v-for="k in (['experience', 'highlight'] as const)"
-                  :key="k"
-                  class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft"
-                >
-                  <i class="size-2.5 rounded-full not-italic" :class="SPOT_KIND[k].dot" />
-                  {{ SPOT_KIND[k].label }} ‧ {{ SPOT_KIND[k].short }}
+                <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
+                  <i class="size-2.5 rounded-full bg-vermilion-500 not-italic" />{{ LEVELS[2]!.name }}指定站
+                </span>
+                <span class="flex items-center gap-1.5 text-[10px] font-bold text-ink-soft">
+                  <i class="size-2.5 rounded-full bg-indigoink-500 not-italic" />一般站點
                 </span>
               </div>
             </div>
@@ -275,20 +273,19 @@ watch(activeRouteId, () => {
 
         <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
           本活動規劃 {{ ROUTES.length }} 條遊樂路線，串起雲林 {{ ALL_SPOTS.length }} 個活動站點。
-          旅客於站點現場掃描專屬 QR code 完成到訪紀錄，並以「一個{{ SPOT_KIND.experience.label }} ＋
-          一個{{ SPOT_KIND.highlight.label }}」為一組，分三段依序解鎖優惠券獎勵，
-          最高可累積 {{ toComma(CAMPAIGN.quota) }} 元，於全縣合作店家直接折抵。
+          旅客於站點現場掃碼或定位完成打卡，依打卡進度升級會員等級並獲得點數，
+          最高累積 {{ toComma(CAMPAIGN.quota) }} 點，可於護照的兌換專區換取優惠券。
         </p>
 
         <ol class="mt-6 space-y-4">
           <li
             v-for="(t, i) in [
               `${ROUTES.length} 條路線為建議動線，不限定走訪順序，也不限定只能完成一條。`,
-              `${SPOT_KIND.experience.label}共 ${EXPERIENCE_SPOTS.length} 處：${SPOT_KIND.experience.desc}`,
-              `${SPOT_KIND.highlight.label}共 ${HIGHLIGHT_SPOTS.length} 處：${SPOT_KIND.highlight.desc}`,
-              '完成「一個體驗站 ＋ 一個亮點站」為一組。三段依序解鎖：第一段 250 元、第二段 250 元、第三段 500 元。',
-              '各階段之完成間隔不限，同一日內連續完成三段亦可；符合條件後由系統即時自動核發優惠券。',
-              '同一會員於同一站點僅計算一次，重複掃碼不重複計入。'
+              `完成會員註冊即成為等級一「${LEVELS[0]!.name}」，獲得 ${LEVELS[0]!.reward} 點。`,
+              `任意 ${LEVEL_TWO_CHECKINS} 個站點打卡，升級為等級二「${LEVELS[1]!.name}」，再獲得 ${LEVELS[1]!.reward} 點。`,
+              `首推路線 ${DESIGNATED_SPOT_IDS.length} 個指定站全部打卡，升級為等級三「${LEVELS[2]!.name}」，再獲得 ${LEVELS[2]!.reward} 點。`,
+              '點數可於兌換專區換取符合目前等級的優惠；兌換扣除點數，但不影響已取得的等級。',
+              '同一會員於同一站點僅計算一次，重複打卡不重複計入。'
             ]"
             :key="i"
             class="flex gap-3.5"

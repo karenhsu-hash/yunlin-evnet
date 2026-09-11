@@ -30,22 +30,22 @@ export const WEEKLY: WeekPoint[] = [
 export const FUNNEL = [
   { label: '加 LINE 好友', value: 24860 },
   { label: '完成會員註冊', value: 18420 },
-  { label: '首次景點打卡', value: 14205 },
-  { label: '完成第一段領券', value: 11380 },
-  { label: '完成三段領滿', value: 6240 },
+  { label: '首次站點打卡', value: 14205 },
+  { label: '升級探索會員', value: 11380 },
+  { label: '升級達成會員', value: 6240 },
   { label: '實際使用優惠券', value: 5180 }
 ]
 
-/** 景點打卡次數 TOP 8 */
+/** 站點打卡次數 TOP 8 */
 export const SPOT_RANK = [
-  { name: '北港朝天宮商圈', type: 'experience' as const, count: 9840 },
-  { name: '虎尾糖廠冰城', type: 'experience' as const, count: 8720 },
-  { name: '北港女兒橋', type: 'highlight' as const, count: 8150 },
-  { name: '虎尾鐵橋', type: 'highlight' as const, count: 7460 },
-  { name: '西螺延平老街', type: 'experience' as const, count: 6980 },
-  { name: '古坑華山咖啡園區', type: 'experience' as const, count: 5410 },
-  { name: '成龍濕地', type: 'highlight' as const, count: 4870 },
-  { name: '五元二角綠廊', type: 'highlight' as const, count: 4120 }
+  { name: '北港朝天宮商圈', count: 9840 },
+  { name: '虎尾糖廠冰城', count: 8720 },
+  { name: '北港女兒橋', count: 8150 },
+  { name: '虎尾鐵橋', count: 7460 },
+  { name: '西螺延平老街', count: 6980 },
+  { name: '古坑華山咖啡園區', count: 5410 },
+  { name: '成龍濕地', count: 4870 },
+  { name: '五元二角綠廊', count: 4120 }
 ]
 
 export interface StoreRow {
@@ -65,7 +65,7 @@ export const STORES: StoreRow[] = [
   { id: 's3', name: '虎尾魷魚嘴羹', taxId: '78120456', town: '虎尾鎮', count: 356, amount: 96750, flagged: false },
   { id: 's4', name: '華山觀景咖啡', taxId: '33901287', town: '古坑鄉', count: 341, amount: 145250, flagged: true },
   { id: 's5', name: '口湖烏魚子專賣', taxId: '65482210', town: '口湖鄉', count: 297, amount: 128000, flagged: false },
-  { id: 's6', name: '斗六太平old街屋', taxId: '90223145', town: '斗六市', count: 264, amount: 79500, flagged: false },
+  { id: 's6', name: '斗六太平老街屋', taxId: '90223145', town: '斗六市', count: 264, amount: 79500, flagged: false },
   { id: 's7', name: '台西蚵嗲本舖', taxId: '11785624', town: '台西鄉', count: 231, amount: 62250, flagged: true },
   { id: 's8', name: '水林番薯會社', taxId: '44098317', town: '水林鄉', count: 208, amount: 58000, flagged: false }
 ]
@@ -75,20 +75,23 @@ export interface MemberRow {
   name: string
   email: string
   identity: 'local' | 'visitor'
-  stages: 0 | 1 | 2 | 3
-  issued: number
-  used: number
+  /** 會員等級；完成註冊即為等級一 */
+  level: 1 | 2 | 3
+  /** 累積獲得點數（由等級決定） */
+  earned: number
+  /** 已兌換成優惠券的點數 */
+  spent: number
   /** 一人一帳號控管：信箱／身分證去重命中 */
   dupFlag: boolean
 }
 
 export const MEMBERS: MemberRow[] = [
-  { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', stages: 3, issued: 1000, used: 750, dupFlag: false },
-  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', stages: 2, issued: 500, used: 500, dupFlag: false },
-  { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', stages: 3, issued: 1000, used: 1000, dupFlag: false },
-  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', stages: 1, issued: 250, used: 0, dupFlag: true },
-  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', stages: 0, issued: 0, used: 0, dupFlag: false },
-  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', stages: 2, issued: 500, used: 250, dupFlag: false }
+  { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 750, dupFlag: false },
+  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', level: 2, earned: 500, spent: 500, dupFlag: false },
+  { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 1000, dupFlag: false },
+  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', level: 1, earned: 250, spent: 0, dupFlag: true },
+  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', level: 1, earned: 250, spent: 0, dupFlag: false },
+  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', level: 2, earned: 500, spent: 250, dupFlag: false }
 ]
 
 export function useAdmin() {
