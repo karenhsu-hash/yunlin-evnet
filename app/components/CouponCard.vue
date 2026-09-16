@@ -25,7 +25,7 @@ withDefaults(
     ]"
   >
     <div class="flex items-stretch">
-      <!-- 面額區 -->
+      <!-- 左區：店家折抵券顯示面額，借問站好禮沒有面額，改顯示「好禮」 -->
       <div
         class="shrink-0 w-[104px] grid place-items-center px-3 py-4"
         :class="coupon.status === 'unused' ? 'bg-marigold-100' : 'bg-paper-deep'"
@@ -35,9 +35,14 @@ withDefaults(
             class="font-black leading-none"
             :class="coupon.status === 'unused' ? 'text-ink' : 'text-ink-faint'"
           >
-            <span class="text-sm align-top">$</span><span class="text-[34px]">{{ coupon.value }}</span>
+            <template v-if="coupon.channel === 'store'">
+              <span class="text-sm align-top">$</span><span class="text-[34px]">{{ coupon.value }}</span>
+            </template>
+            <UIcon v-else name="i-lucide-gift" class="size-9" />
           </p>
-          <p class="mt-1 text-[10px] font-bold text-ink-soft">優惠券</p>
+          <p class="mt-1 text-[10px] font-bold text-ink-soft">
+            {{ coupon.channel === 'store' ? '折抵券' : '限量好禮' }}
+          </p>
         </div>
       </div>
 
@@ -56,15 +61,20 @@ withDefaults(
           >
             {{ coupon.status === 'unused' ? '可使用' : coupon.status === 'used' ? '已核銷' : '已過期' }}
           </span>
-          <span class="text-[10px] text-ink-faint">{{ coupon.value }} 點兌換</span>
+          <span class="text-[10px] text-ink-faint">{{ toComma(coupon.cost) }} 點兌換</span>
         </div>
 
-        <p class="mt-1.5 font-mono text-[13px] font-bold tracking-widest text-ink">
+        <p class="mt-1 truncate text-xs font-bold text-ink">{{ coupon.name }}</p>
+
+        <p class="mt-1 font-mono text-[13px] font-bold tracking-widest text-ink">
           {{ coupon.code }}
         </p>
 
         <p class="mt-1 text-[11px] leading-snug text-ink-soft">
-          最低消費 {{ CAMPAIGN.minSpend }} 元 ‧ 不找零
+          <template v-if="coupon.channel === 'store'">
+            最低消費 {{ CAMPAIGN.minSpend }} 元 ‧ 不找零
+          </template>
+          <template v-else>至借問站出示領取</template>
         </p>
         <p class="text-[11px] text-ink-faint">
           <template v-if="coupon.status === 'used'">

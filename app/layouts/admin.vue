@@ -5,7 +5,8 @@ const { role } = useAdmin()
 const navs = [
   { to: '/admin', label: '儀表板', icon: 'i-lucide-layout-dashboard' },
   { to: '/admin/data', label: '資料維護', icon: 'i-lucide-database' },
-  { to: '/admin/reports', label: '報表請款', icon: 'i-lucide-receipt-text' }
+  { to: '/admin/reports', label: '報表請款', icon: 'i-lucide-receipt-text' },
+  { to: '/admin/lottery', label: '抽獎名單', icon: 'i-lucide-dices' }
 ]
 
 const isActive = (to: string) => (to === '/admin' ? route.path === '/admin' : route.path.startsWith(to))
@@ -54,7 +55,7 @@ watch(() => route.path, () => (mobileOpen.value = false))
                   { key: 'organizer', label: '主辦唯讀' }
                 ] as const)"
                 :key="r.key"
-                class="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                class="rounded-full px-3 py-2 text-xs font-bold transition-colors"
                 :class="role === r.key ? 'bg-white text-ink' : 'text-white/70'"
                 @click="role = r.key"
               >{{ r.label }}</button>
@@ -66,7 +67,7 @@ watch(() => route.path, () => (mobileOpen.value = false))
               variant="ghost"
               size="sm"
               icon="i-lucide-arrow-left"
-              class="hidden lg:inline-flex text-white/70 hover:text-white font-bold"
+              class="hidden lg:inline-flex py-2 text-white/70 hover:text-white font-bold"
             >回旅客端</UButton>
 
             <UButton
@@ -132,7 +133,7 @@ watch(() => route.path, () => (mobileOpen.value = false))
 
     <footer class="mt-8 border-t border-paper-deep bg-paper">
       <div class="container-page flex flex-wrap items-center justify-between gap-3 py-4">
-        <NuxtLink to="/" class="text-xs font-bold text-sky-600">← 回旅客端</NuxtLink>
+        <NuxtLink to="/" class="py-2 text-xs font-bold text-sky-600">← 回旅客端</NuxtLink>
       </div>
     </footer>
   </div>

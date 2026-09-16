@@ -2,18 +2,13 @@
 import type { Level, Spot } from '~/composables/useCampaign'
 
 /**
- * 打卡有兩種方式：
- *   掃碼　—— 站點現場的實體 QR code，掃完再比對經緯度確認人真的在現場
- *   定位　—— 步道、濕地、出海口這類開放場域沒有立牌可掛 QR，改成按「我已抵達」，
- *            直接取瀏覽器定位與站點座標比對，在判定半徑內就算完成
- *
- * hasQr 為 false 的站點只提供定位打卡，選到時自動切過去，掃碼那個分頁會被停用。
+ * 打卡一律用定位：按「我已抵達」取瀏覽器座標，與站點座標比對，在判定半徑內就算完成。
+ * 不做 QR code —— 實體立牌要印製、換位、補發，維護成本高，定位就足以確認人在現場。
  */
 const route = useRoute()
 const { isLoggedIn, member, isCheckedIn, spotById, checkIn, earnedPoints } = useCampaign()
 
-type Method = 'qr' | 'geo'
-type Phase = 'idle' | 'scanning' | 'locating' | 'done'
+type Phase = 'idle' | 'locating' | 'done'
 
 const phase = ref<Phase>('idle')
 
@@ -21,20 +16,15 @@ const target = ref<Spot | null>(
   (typeof route.query.spot === 'string' ? spotById(route.query.spot) : null) ?? null
 )
 
-/**
- * 預設方式要看初始站點決定：從 /checkin?spot=g6 這種無 QR 的站點進來時，
- * target 是初始值而不是「變更」，下面的 watch 不會觸發，
- * 若一律預設 qr 會直接卡在被停用的掃碼分頁。
- */
-const method = ref<Method>(target.value && !hasQr(target.value) ? 'geo' : 'qr')
-
 const result = ref<{
   ok: boolean
   duplicated: boolean
-  /** 這一章實際加了幾點；點數封頂後為 0 */
+  /** 這一章加了幾點 */
   gained: number
   /** 這一章剛好讓會員升級時，升到哪一級 */
   levelUp: Level | null
+  /** 順帶解鎖的里程碑任務 */
+  unlocked: Task[]
 } | null>(null)
 
 /** 定位打卡的狀態機。far＝有拿到座標但距離不夠近，error＝根本沒拿到座標 */
@@ -50,16 +40,13 @@ const geo = ref<{
 const resetGeo = () =>
   (geo.value = { state: 'idle', distance: null, accuracy: null, nearest: null, message: null })
 
-/** 目標站點是否有實體 QR；沒有就只能定位 */
-const targetHasQr = computed(() => (target.value ? hasQr(target.value) : true))
 const targetRadius = computed(() => (target.value ? radiusOf(target.value) : CAMPAIGN.geoRadiusM))
 
-// 換站點時清掉上一次的定位結果；選到沒有 QR 的站點就自動切到定位打卡
+// 換站點時清掉上一次的定位結果。
 // 打卡完成後 target 可能是被定位反查填上的，這時不能清掉剛算出來的距離
-watch(target, (t) => {
+watch(target, () => {
   if (phase.value === 'done') return
   resetGeo()
-  if (t && !hasQr(t)) method.value = 'geo'
 })
 
 /** 快速挑站：還沒蓋的站點，由近到遠 */
@@ -69,45 +56,21 @@ const pickList = computed(() =>
     .slice(0, 8)
 )
 
-function pickSpot(): Spot {
-  const todo = ALL_SPOTS.filter((s) => !isCheckedIn(s.id))
-  const pool = todo.length ? todo : ALL_SPOTS
-  return pool[Math.floor(Math.random() * pool.length)]
-}
-
-let timers: ReturnType<typeof setTimeout>[] = []
-onUnmounted(() => timers.forEach(clearTimeout))
-
-/** 寫入打卡紀錄（兩種方式共用），並記下加了幾點、是否剛好讓會員升級 */
+/** 寫入打卡紀錄，並記下加了幾點、是否升級、是否順帶解鎖里程碑 */
 function finish(spot: Spot) {
   const duplicated = isCheckedIn(spot.id)
-  const outcome = duplicated ? { gained: 0, levelUp: null } : checkIn(spot.id)
+  const outcome = duplicated ? { gained: 0, levelUp: null, unlocked: [] } : checkIn(spot.id)
   result.value = { ok: true, duplicated, ...outcome }
   phase.value = 'done'
 }
 
-// ── 掃碼打卡 ────────────────────────────────────
-function startScan() {
-  if (!target.value) target.value = pickSpot()
-  if (!targetHasQr.value) return
-  result.value = null
-  phase.value = 'scanning'
-
-  // 模擬掃碼、定位、寫入紀錄三段耗時
-  timers.push(
-    setTimeout(() => (phase.value = 'locating'), 1400),
-    setTimeout(() => finish(target.value!), 2600)
-  )
-}
-
-// ── 定位打卡 ────────────────────────────────────
 function locate() {
   const spot = target.value
   result.value = null
   resetGeo()
 
   if (!import.meta.client || !('geolocation' in navigator)) {
-    geo.value = { ...geo.value, state: 'error', message: '這個瀏覽器不支援定位功能，請改用掃碼或更換瀏覽器。' }
+    geo.value = { ...geo.value, state: 'error', message: '這個瀏覽器不支援定位功能，請更換瀏覽器再試。' }
     return
   }
   // 定位 API 只在安全來源可用（HTTPS 或 localhost），正式站沒上 HTTPS 會整個拿不到座標
@@ -176,15 +139,13 @@ function simulateArrival() {
 }
 
 function reset() {
-  timers.forEach(clearTimeout)
-  timers = []
   target.value = null
   result.value = null
   resetGeo()
   phase.value = 'idle'
 }
 
-const busy = computed(() => phase.value === 'scanning' || phase.value === 'locating')
+const busy = computed(() => phase.value === 'locating')
 </script>
 
 <template>
@@ -205,7 +166,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
         <span class="chip bg-vermilion-100 text-vermilion-700">觀光護照</span>
         <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">護照集章</h1>
         <p class="mt-1.5 max-w-lg text-sm text-ink-soft">
-          走到站點現場，掃碼或定位，就能在護照上蓋下一枚章。
+          走到站點現場按下「我已抵達」，系統確認你在範圍內就蓋章。
         </p>
       </div>
       <div class="flex items-center gap-2.5 rounded-2xl bg-white px-3.5 py-2.5 shadow-card">
@@ -220,65 +181,11 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
     </header>
 
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-      <!-- ── 左：掃描器 / 結果 ────────────────────── -->
+      <!-- ── 左：定位雷達 / 結果 ──────────────────── -->
       <div>
-        <!-- 打卡前：先選方式，再掃碼或定位 -->
         <template v-if="phase !== 'done'">
-          <!-- 打卡方式。沒有實體 QR 的站點會停用掃碼那一顆 -->
-          <div class="flex gap-2" role="tablist" aria-label="集章方式">
-            <button
-              role="tab"
-              :aria-selected="method === 'qr'"
-              :disabled="!!target && !targetHasQr"
-              class="flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 px-4 py-2.5 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-              :class="method === 'qr' ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
-              @click="method = 'qr'"
-            >
-              <UIcon name="i-lucide-scan-line" class="size-4" />掃碼集章
-            </button>
-            <button
-              role="tab"
-              :aria-selected="method === 'geo'"
-              class="flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 px-4 py-2.5 text-sm font-bold transition-colors"
-              :class="method === 'geo' ? 'border-ink bg-ink text-white' : 'border-paper-deep bg-white text-ink-soft'"
-              @click="method = 'geo'"
-            >
-              <UIcon name="i-lucide-map-pin-check" class="size-4" />定位集章
-            </button>
-          </div>
-
-          <!-- 掃碼取景框 -->
-          <div v-if="method === 'qr'" class="mt-4 overflow-hidden rounded-card bg-ink p-6 sm:p-8">
-            <div class="relative mx-auto aspect-square w-full max-w-xs rounded-3xl bg-black/40">
-              <span class="absolute left-0 top-0 size-10 rounded-tl-3xl border-l-4 border-t-4 border-marigold-500" />
-              <span class="absolute right-0 top-0 size-10 rounded-tr-3xl border-r-4 border-t-4 border-marigold-500" />
-              <span class="absolute left-0 bottom-0 size-10 rounded-bl-3xl border-l-4 border-b-4 border-marigold-500" />
-              <span class="absolute right-0 bottom-0 size-10 rounded-br-3xl border-r-4 border-b-4 border-marigold-500" />
-
-              <span
-                v-if="busy"
-                class="absolute left-2 right-2 top-0 h-0.5 bg-marigold-500 shadow-[0_0_12px_2px_rgb(245_196_51/0.8)] animate-scan-line"
-              />
-
-              <div class="absolute inset-0 grid place-items-center px-6 text-center">
-                <div v-if="phase === 'idle'">
-                  <UIcon name="i-lucide-scan-line" class="size-14 text-white/70" />
-                  <p class="mt-3 text-xs text-white/70">將站點的 QR code<br>對準取景框</p>
-                </div>
-                <div v-else-if="phase === 'scanning'">
-                  <UIcon name="i-lucide-qr-code" class="size-12 animate-pulse text-marigold-500" />
-                  <p class="mt-3 text-xs font-bold text-marigold-500">讀取 QR code…</p>
-                </div>
-                <div v-else>
-                  <UIcon name="i-lucide-satellite-dish" class="size-12 animate-pulse text-marigold-500" />
-                  <p class="mt-3 text-xs font-bold text-marigold-500">確認你在現場…</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- 定位雷達 -->
-          <div v-else class="mt-4 overflow-hidden rounded-card bg-ink p-6 sm:p-8">
+          <div class="overflow-hidden rounded-card bg-ink p-6 sm:p-8">
             <div class="relative mx-auto grid aspect-square w-full max-w-xs place-items-center rounded-3xl bg-black/40">
               <!-- 判定半徑的示意同心圓 -->
               <span
@@ -324,12 +231,9 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
               </span>
             </div>
 
-            <p
-              v-if="!targetHasQr"
-              class="mt-3 flex items-start gap-1.5 rounded-2xl bg-sky-50 px-3 py-2 text-[11px] leading-relaxed text-sky-700"
-            >
+            <p class="mt-3 flex items-start gap-1.5 rounded-2xl bg-sky-50 px-3 py-2 text-[11px] leading-relaxed text-sky-700">
               <UIcon name="i-lucide-info" class="mt-px size-3.5 shrink-0" />
-              <span>這是開放場域，現場沒有設置實體 QR code，請用<b>定位集章</b>完成（判定半徑 {{ targetRadius }} 公尺）。</span>
+              <span>走進<b>{{ targetRadius }} 公尺</b>內按「我已抵達」即可蓋章，不需要掃描任何 QR code。</span>
             </p>
           </div>
 
@@ -371,18 +275,17 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
             size="xl"
             block
             :loading="busy"
-            :icon="busy ? undefined : method === 'qr' ? 'i-lucide-scan-line' : 'i-lucide-map-pin-check'"
+            :icon="busy ? undefined : 'i-lucide-map-pin-check'"
             class="mt-4 rounded-full font-bold"
-            @click="method === 'qr' ? startScan() : locate()"
+            @click="locate"
           >
-            <template v-if="busy">{{ phase === 'locating' ? '定位中…' : '辨識中…' }}</template>
-            <template v-else-if="method === 'qr'">{{ target ? '開始掃碼' : '掃描附近的 QR code' }}</template>
+            <template v-if="busy">定位中…</template>
             <template v-else>{{ geo.state === 'far' ? '再定位一次' : '我已抵達，蓋章' }}</template>
           </UButton>
 
           <!-- ⚠️ 示範用捷徑，正式上線移除 -->
           <button
-            v-if="method === 'geo' && target"
+            v-if="target"
             class="mt-2.5 w-full text-center text-[11px] font-bold text-ink-faint underline underline-offset-2 hover:text-ink-soft"
             @click="simulateArrival"
           >
@@ -419,13 +322,10 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
                 <img :src="target.art" alt="" class="size-20 object-contain">
               </span>
               <h2 class="mt-3 text-2xl font-black sm:text-3xl">蓋章成功！</h2>
-              <p v-if="result.gained" class="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-marigold-500 px-4 py-1.5 text-base font-black text-ink">
+              <p class="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-marigold-500 px-4 py-1.5 text-base font-black text-ink">
                 <UIcon name="i-lucide-coins" class="size-4.5" />+{{ result.gained }} 點
               </p>
-              <p class="mt-2 text-xs text-ink-soft">
-                <template v-if="result.gained">已蓋進你的觀光護照，累積 {{ toComma(earnedPoints) }} 點</template>
-                <template v-else>已蓋進你的觀光護照。點數已達上限 {{ toComma(CAMPAIGN.quota) }} 點，本次不再加點</template>
-              </p>
+              <p class="mt-2 text-xs text-ink-soft">已蓋進你的觀光護照，累積 {{ toComma(earnedPoints) }} 點</p>
             </div>
 
             <div class="p-5 sm:p-6">
@@ -466,12 +366,26 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
             </UButton>
           </div>
 
+          <!-- 順帶解鎖的里程碑（打卡任務不會觸發，但共用同一個結果結構） -->
+          <div
+            v-for="m in result.unlocked"
+            :key="m.id"
+            class="mt-4 flex items-center gap-3 rounded-card border-2 border-marigold-500 bg-marigold-50 p-4 animate-pop-in"
+          >
+            <img :src="m.art" alt="" class="h-12 w-auto shrink-0 object-contain">
+            <div class="min-w-0 flex-1">
+              <p class="text-[11px] font-bold text-marigold-700">解鎖里程碑</p>
+              <p class="font-black">{{ m.title }}</p>
+            </div>
+            <span class="shrink-0 font-black text-marigold-700">+{{ m.points }}</span>
+          </div>
+
           <div class="mt-5 flex flex-wrap gap-3">
             <UButton color="neutral" variant="outline" size="lg" class="flex-1 rounded-full font-bold" @click="reset">
               再蓋一枚
             </UButton>
-            <UButton to="/events" color="primary" size="lg" class="flex-1 rounded-full font-bold">
-              回路線地圖
+            <UButton to="/tasks" color="primary" size="lg" class="flex-1 rounded-full font-bold">
+              回任務牆
             </UButton>
           </div>
         </template>
@@ -488,7 +402,7 @@ const busy = computed(() => phase.value === 'scanning' || phase.value === 'locat
 
         <div v-if="phase === 'idle'" class="card p-5 sm:p-6">
           <h2 class="text-lg font-black">或直接挑一個站點</h2>
-          <p class="mt-0.5 text-xs text-ink-soft">選定站點後，掃碼或定位都能蓋章</p>
+          <p class="mt-0.5 text-xs text-ink-soft">選定站點後，到現場按「我已抵達」即可蓋章</p>
 
           <div class="mt-4 grid gap-2.5 sm:grid-cols-2">
             <button

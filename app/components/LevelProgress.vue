@@ -11,7 +11,7 @@ withDefaults(
   { compact: false }
 )
 
-const { level, earnedPoints, points, nextLevel, levelProgress, atCap } = useCampaign()
+const { level, earnedPoints, points, nextLevel, levelProgress, draws } = useCampaign()
 </script>
 
 <template>
@@ -80,8 +80,9 @@ const { level, earnedPoints, points, nextLevel, levelProgress, atCap } = useCamp
             :style="{ width: `${Math.round(levelProgress * 100)}%` }"
           />
         </div>
-        <p v-if="atCap" class="mt-1.5 text-[11px] text-ink-faint">
-          點數已達上限 {{ toComma(CAMPAIGN.quota) }} 點，之後打卡只蓋章、不再加點
+        <p class="mt-1.5 text-[11px] text-ink-faint">
+          點數持續累積不歸零；目前已取得 {{ draws.total }} 次抽獎資格，
+          再 {{ toComma(draws.toNext) }} 點可再得一次。
         </p>
       </div>
 

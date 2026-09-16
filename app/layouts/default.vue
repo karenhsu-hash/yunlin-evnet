@@ -5,7 +5,8 @@ const { isLoggedIn, logout } = useCampaign()
 /** 網頁版主導覽：桌機橫向排開，行動裝置收進 UHeader 內建選單 */
 const links = [
   { label: '首頁', to: '/', icon: 'i-lucide-house' },
-  { label: '活動景點', to: '/events', icon: 'i-lucide-map' },
+  { label: '任務牆', to: '/tasks', icon: 'i-lucide-list-checks' },
+  { label: '推薦路線', to: '/events', icon: 'i-lucide-map' },
   { label: '合作店家', to: '/stores', icon: 'i-lucide-store' },
   { label: '活動辦法', to: '/rules', icon: 'i-lucide-scroll-text' },
   { label: '護照集章', to: '/checkin', icon: 'i-lucide-stamp' }
@@ -58,7 +59,7 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
               variant="ghost"
               size="sm"
               icon="i-lucide-circle-user-round"
-              class="hidden md:inline-flex rounded-full font-bold text-white hover:bg-white/10"
+              class="hidden md:inline-flex rounded-full py-2 font-bold text-white hover:bg-white/10"
             >我的護照</UButton>
             <UButton
               color="neutral"
@@ -76,7 +77,7 @@ const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.s
               color="neutral"
               variant="ghost"
               size="sm"
-              class="hidden md:inline-flex rounded-full font-bold text-white hover:bg-white/10"
+              class="hidden md:inline-flex rounded-full py-2 font-bold text-white hover:bg-white/10"
             >登入</UButton>
             <UButton
               to="/register"

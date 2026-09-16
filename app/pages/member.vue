@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Coupon } from '~/composables/useCampaign'
+import type { Coupon, Task } from '~/composables/useCampaign'
 
 /**
  * 我的觀光護照 —— 原本的「會員中心」。
@@ -7,12 +7,14 @@ import type { Coupon } from '~/composables/useCampaign'
  * 從護照的角度重新組織：頁首是護照的個人資料頁（持有人、護照號碼、會員等級、
  * 有效期限），內容三頁分別是印章頁、點數兌換與使用紀錄。
  *
- * 印章頁把全部站點攤成印章格，蓋過的顯示彩色印章、沒蓋的留灰階淡影 ——
- * 護照真正好玩的地方就是那一頁的空格。每一格標出任務點數，讓人挑下一站時知道值多少。
+ * 印章頁把任務攤成印章格，完成的顯示彩色印章、沒完成的留灰階淡影 ——
+ * 護照真正好玩的地方就是那一頁的空格。分成打卡章與指定任務章兩區，
+ * 每一格標出任務點數，讓人挑下一個任務時知道值多少。
  */
 const {
   isLoggedIn, member, coupons, levelInfo, points, earnedPoints, walletAmount,
-  checkedIn, isCheckedIn, routeProgress, canRedeem, redeem, resetDemo
+  isTaskDone, completedTasks, draws, routeProgress, completedRoutes,
+  canRedeem, redeem, resetDemo
 } = useCampaign()
 const { redeemRecords } = useMember()
 
@@ -27,11 +29,17 @@ const tabs: { key: Tab; label: string; icon: string }[] = [
 
 const usedTotal = computed(() => redeemRecords.value.reduce((s, r) => s + r.couponValue, 0))
 
-/** 兌換品項連同「現在能不能換、不能的話為什麼」一起算好，模板只管顯示 */
+/** 兌換品項連同「能不能換、不能的話為什麼、還剩幾份」一起算好，模板只管顯示 */
 const rewardList = computed(() =>
   REWARDS.map((r) => {
     const check = canRedeem(r)
-    return { ...r, ok: check.ok, reason: check.ok ? '' : check.reason }
+    return {
+      ...r,
+      ok: check.ok,
+      reason: check.ok ? '' : check.reason,
+      left: stockLeft(r),
+      soldOut: isSoldOut(r)
+    }
   })
 )
 
@@ -50,10 +58,26 @@ const passportNo = computed(() => {
   return `YL-2026-${String(seed % 100000).padStart(5, '0')}`
 })
 
-/** 印章頁排序：蓋過的在前（先看到成果），其餘照資料順序 */
-const stampPage = computed(() =>
-  [...ALL_SPOTS].sort((a, b) => Number(isCheckedIn(b.id)) - Number(isCheckedIn(a.id)))
-)
+/** 印章頁分兩區：打卡章與指定任務章。各自把完成的排前面，先看到成果 */
+const byDoneFirst = (list: Task[]) =>
+  [...list].sort((a, b) => Number(isTaskDone(b)) - Number(isTaskDone(a)))
+
+const stampSections = computed(() => [
+  {
+    key: 'checkin',
+    label: '打卡章',
+    desc: '走到站點現場定位取得',
+    tasks: byDoneFirst(tasksOfKind('checkin'))
+  },
+  {
+    key: 'designated',
+    label: '指定任務章',
+    desc: '食農教育與 iRent 租車任務',
+    tasks: byDoneFirst(DESIGNATED_TASKS)
+  }
+])
+
+const stampCount = (list: Task[]) => list.filter(isTaskDone).length
 
 /**
  * 每枚印章給一點角度，看起來像手蓋上去的。
@@ -121,20 +145,24 @@ const tiltOf = (id: string) =>
             </div>
           </div>
 
-          <dl class="grid grid-cols-3 gap-2.5 sm:gap-4 lg:w-[400px]">
+          <dl class="grid grid-cols-2 gap-2.5 sm:gap-4 lg:w-[460px] lg:grid-cols-4">
             <div class="rounded-2xl bg-marigold-500 px-3 py-3 text-center text-ink">
               <dt class="text-[10px] font-bold text-ink/70">等級{{ ['一', '二', '三'][levelInfo.level - 1] }}</dt>
               <dd class="mt-1 text-base font-black leading-none sm:text-lg">{{ levelInfo.name }}</dd>
             </div>
             <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
-              <dt class="text-[10px] text-white/70">已蓋章</dt>
-              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
-                {{ checkedIn.length }}<span class="text-[10px] font-bold"> /{{ ALL_SPOTS.length }}</span>
-              </dd>
+              <dt class="text-[10px] text-white/70">累積點數</dt>
+              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">{{ toComma(earnedPoints) }}</dd>
             </div>
             <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
               <dt class="text-[10px] text-white/70">可用點數</dt>
               <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">{{ toComma(points) }}</dd>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-3 py-3 text-center">
+              <dt class="text-[10px] text-white/70">抽獎資格</dt>
+              <dd class="mt-1 text-xl font-black leading-none sm:text-2xl">
+                {{ draws.total }}<span class="text-[10px] font-bold"> 次</span>
+              </dd>
             </div>
           </dl>
         </div>
@@ -176,7 +204,7 @@ const tiltOf = (id: string) =>
           </div>
 
           <button
-            class="mt-6 hidden w-full text-left text-[11px] text-ink-faint underline lg:block"
+            class="mt-6 hidden w-full py-2 text-left text-[11px] text-ink-faint underline lg:block"
             @click="resetDemo"
           >重置我的紀錄</button>
         </nav>
@@ -198,55 +226,83 @@ const tiltOf = (id: string) =>
               </div>
             </div>
 
-            <!-- 印章格 -->
-            <div class="card p-5 sm:p-6">
+            <!-- 印章格：打卡章與指定任務章兩區 -->
+            <div v-for="sec in stampSections" :key="sec.key" class="card p-5 sm:p-6">
               <div class="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 class="text-lg font-black">我的印章</h3>
+                <h3 class="text-lg font-black">{{ sec.label }}</h3>
                 <span class="text-xs text-ink-soft">
-                  {{ checkedIn.length }} / {{ ALL_SPOTS.length }} 枚
+                  {{ stampCount(sec.tasks) }} / {{ sec.tasks.length }} 枚
                 </span>
               </div>
               <p class="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
                 <UIcon name="i-lucide-coins" class="size-3.5 text-marigold-600" />
-                每一枚章都是一個任務，依難度可得 100～500 點
+                {{ sec.desc }}，每一枚依難度可得 100～500 點
               </p>
 
               <ul class="mt-5 grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-5">
-                <li v-for="spot in stampPage" :key="spot.id" class="flex flex-col items-center text-center">
+                <li v-for="t in sec.tasks" :key="t.id" class="flex flex-col items-center text-center">
                   <span class="relative">
                     <span
                       class="grid size-[4.5rem] place-items-center rounded-full transition-transform sm:size-20"
-                      :class="isCheckedIn(spot.id)
+                      :class="isTaskDone(t)
                         ? 'border-[3px] border-vermilion-500 bg-vermilion-50 shadow-card'
                         : 'border-2 border-dashed border-paper-deep bg-paper-soft'"
-                      :style="isCheckedIn(spot.id) ? { transform: `rotate(${tiltOf(spot.id)}deg)` } : undefined"
+                      :style="isTaskDone(t) ? { transform: `rotate(${tiltOf(t.id)}deg)` } : undefined"
                     >
-                      <!-- 沒蓋到的先給灰階淡影，讓人看得到「還缺這一枚長什麼樣」 -->
+                      <!-- 沒完成的先給灰階淡影，讓人看得到「還缺這一枚長什麼樣」 -->
                       <img
-                        :src="spot.art"
+                        :src="t.art"
                         alt=""
                         loading="lazy"
                         class="size-12 object-contain sm:size-14"
-                        :class="isCheckedIn(spot.id) ? '' : 'opacity-25 grayscale'"
+                        :class="isTaskDone(t) ? '' : 'opacity-25 grayscale'"
                       >
                     </span>
-                    <!-- 任務點數；放在外層，不跟著印章傾斜。蓋過的改成實心，表示已入帳 -->
+                    <!-- 任務點數；放在外層，不跟著印章傾斜。完成的改成實心，表示已入帳 -->
                     <span
                       class="absolute -right-2 -top-1 rounded-full px-1.5 py-0.5 text-[10px] font-black ring-2 ring-white"
-                      :class="isCheckedIn(spot.id) ? 'bg-marigold-500 text-ink' : 'bg-marigold-50 text-marigold-700'"
-                    >+{{ spot.points }}</span>
+                      :class="isTaskDone(t) ? 'bg-marigold-500 text-ink' : 'bg-marigold-50 text-marigold-700'"
+                    >+{{ t.points }}</span>
                   </span>
                   <span
                     class="mt-2 line-clamp-2 text-[11px] font-bold leading-tight"
-                    :class="isCheckedIn(spot.id) ? 'text-ink' : 'text-ink-faint'"
-                  >{{ spot.name }}</span>
-                  <span class="text-[10px] text-ink-faint">{{ spot.town }}</span>
+                    :class="isTaskDone(t) ? 'text-ink' : 'text-ink-faint'"
+                  >{{ t.title }}</span>
                 </li>
               </ul>
 
-              <UButton to="/checkin" color="primary" class="mt-6 rounded-full font-bold" trailing-icon="i-lucide-chevron-right">
-                去蓋下一枚章
-              </UButton>
+              <UButton
+                :to="sec.key === 'checkin' ? '/checkin' : '/tasks'"
+                color="primary"
+                class="mt-6 rounded-full font-bold"
+                trailing-icon="i-lucide-chevron-right"
+              >{{ sec.key === 'checkin' ? '去蓋下一枚章' : '看任務牆' }}</UButton>
+            </div>
+
+            <!-- 抽獎資格 -->
+            <div class="card p-5 sm:p-6">
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 class="text-lg font-black">抽獎資格</h3>
+                <span class="text-lg font-black text-marigold-700">{{ draws.total }} 次</span>
+              </div>
+              <p class="mt-0.5 text-xs text-ink-soft">累積點數與路線成就都算，兌換優惠不會扣掉資格</p>
+
+              <dl class="mt-4 space-y-2 text-sm">
+                <div class="flex items-center justify-between rounded-2xl bg-paper-soft px-3.5 py-2.5">
+                  <dt class="text-ink-soft">
+                    累積 {{ toComma(earnedPoints) }} 點 ÷ 每 {{ toComma(CAMPAIGN.lotteryUnit) }} 點
+                  </dt>
+                  <dd class="font-black">{{ draws.fromPoints }} 次</dd>
+                </div>
+                <div class="flex items-center justify-between rounded-2xl bg-paper-soft px-3.5 py-2.5">
+                  <dt class="text-ink-soft">完成 {{ completedRoutes }} 條推薦路線加碼</dt>
+                  <dd class="font-black">{{ draws.fromRoutes }} 次</dd>
+                </div>
+              </dl>
+
+              <p class="mt-3 text-[11px] text-ink-faint">
+                再累積 {{ toComma(draws.toNext) }} 點可再取得一次抽獎資格。開獎與獎品寄送由主辦單位辦理。
+              </p>
             </div>
 
             <!-- 路線成就 -->
@@ -305,7 +361,7 @@ const tiltOf = (id: string) =>
                 class="mt-4 flex items-center gap-2 rounded-2xl bg-moss-50 px-4 py-3 text-sm font-bold text-moss-700 animate-pop-in"
               >
                 <UIcon name="i-lucide-circle-check" class="size-5 shrink-0" />
-                已兌換 {{ justRedeemed.value }} 元優惠券，放進下方券夾了
+                已兌換「{{ justRedeemed.name }}」，放進下方券夾了
               </div>
 
               <ul class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -313,10 +369,13 @@ const tiltOf = (id: string) =>
                   v-for="r in rewardList"
                   :key="r.id"
                   class="flex flex-col rounded-2xl border-2 p-4"
-                  :class="r.ok ? 'border-marigold-500 bg-marigold-50/50' : 'border-paper-deep bg-white'"
+                  :class="[
+                    r.ok ? 'border-marigold-500 bg-marigold-50/50' : 'border-paper-deep bg-white',
+                    r.soldOut ? 'opacity-60' : ''
+                  ]"
                 >
                   <div class="flex items-start justify-between gap-2">
-                    <div>
+                    <div class="min-w-0">
                       <p class="font-black">{{ r.name }}</p>
                       <p class="mt-0.5 text-[11px] text-ink-soft">{{ r.desc }}</p>
                     </div>
@@ -324,8 +383,23 @@ const tiltOf = (id: string) =>
                       {{ LEVELS[r.minLevel - 1]!.name }}起
                     </span>
                   </div>
+
+                  <!-- 限量與取得方式：兌換前最需要知道的兩件事 -->
+                  <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    <span class="flex items-center gap-1 text-ink-soft">
+                      <UIcon
+                        :name="r.channel === 'station' ? 'i-lucide-map-pin' : 'i-lucide-store'"
+                        class="size-3.5"
+                      />
+                      {{ r.channel === 'station' ? '借問站領取' : '合作店家折抵' }}
+                    </span>
+                    <span v-if="r.left === null" class="text-ink-faint">不限量</span>
+                    <span v-else-if="r.soldOut" class="font-bold text-vermilion-600">已兌完</span>
+                    <span v-else class="font-bold text-marigold-700">限量剩 {{ r.left }} 份</span>
+                  </div>
+
                   <div class="mt-4 flex items-center justify-between gap-2">
-                    <span class="text-sm font-black text-marigold-700">{{ r.cost }} 點</span>
+                    <span class="text-sm font-black text-marigold-700">{{ toComma(r.cost) }} 點</span>
                     <UButton
                       :color="r.ok ? 'primary' : 'neutral'"
                       :variant="r.ok ? 'solid' : 'soft'"
@@ -365,8 +439,9 @@ const tiltOf = (id: string) =>
               </div>
 
               <p class="mt-4 rounded-2xl bg-paper-soft px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
-                每張券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用，不找零，
-                兌換後 {{ CAMPAIGN.couponValidDays }} 天內有效，限雲林合作店家。
+                折抵券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用、不找零，限雲林合作店家；
+                限量好禮請至 {{ STATIONS.length }} 處借問站出示兌換券領取。
+                兩者皆於兌換後 {{ CAMPAIGN.couponValidDays }} 天內有效。
               </p>
             </div>
           </div>

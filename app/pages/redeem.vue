@@ -3,6 +3,15 @@ import type { Coupon } from '~/composables/useCampaign'
 
 const { coupons, member } = useCampaign()
 
+/**
+ * 同一個核銷端，兩種身分：
+ *   店家　　核銷折抵券，要輸入消費金額（最低消費門檻）
+ *   借問站　核銷限量好禮的兌換券，沒有金額，核銷完直接給實體
+ * 兩者都靠一組專屬核銷碼防止消費者自行核銷。
+ */
+type Mode = 'store' | 'station'
+const mode = ref<Mode>('store')
+
 /** 店家資料（示意）。核銷碼僅店家知道，全程不對消費者顯示。 */
 const MERCHANT = {
   name: '北港圓仔湯老店',
@@ -10,6 +19,16 @@ const MERCHANT = {
   contact: '05-782-1234',
   code: '2468'
 }
+
+const stationId = ref(STATIONS[0]!.id)
+const station = computed(() => STATIONS.find((s) => s.id === stationId.value)!)
+
+/** 目前這個身分的顯示資料與核銷碼 */
+const desk = computed(() =>
+  mode.value === 'store'
+    ? { label: '店家核銷端', name: MERCHANT.name, sub: `統編 ${MERCHANT.taxId} ‧ ${MERCHANT.contact}`, code: MERCHANT.code, icon: 'i-lucide-store' }
+    : { label: '借問站核銷端', name: station.value.name, sub: `${station.value.address} ‧ ${station.value.hours}`, code: station.value.code, icon: 'i-lucide-map-pin' }
+)
 
 type Step = 'pick' | 'amount' | 'code' | 'done'
 const step = ref<Step>('pick')
@@ -19,7 +38,10 @@ const amount = ref('')
 const codeInput = ref('')
 const codeError = ref(false)
 
-const usable = computed(() => coupons.value.filter((c) => c.status === 'unused'))
+/** 只列得到這個身分能核銷的券：店家核折抵券，借問站核好禮券 */
+const usable = computed(() =>
+  coupons.value.filter((c) => c.status === 'unused' && c.channel === mode.value)
+)
 const amountNum = computed(() => Number(amount.value) || 0)
 
 /** 最低消費一律 300 元，不分券別 */
@@ -36,13 +58,30 @@ const todayLog = ref([
 ])
 const todayTotal = computed(() => todayLog.value.reduce((s, r) => s + r.value, 0))
 
-const steps = ['出示券', '輸入金額', '核銷碼', '完成']
+/** 借問站沒有消費金額這一步 */
+const steps = computed(() =>
+  mode.value === 'store' ? ['出示券', '輸入金額', '核銷碼', '完成'] : ['出示券', '核銷碼', '完成']
+)
+const stepOrder = computed(() =>
+  mode.value === 'store' ? ['pick', 'amount', 'code', 'done'] : ['pick', 'code', 'done']
+)
 
 function pick(c: Coupon) {
   picked.value = c
   amount.value = ''
-  step.value = 'amount'
+  codeInput.value = ''
+  codeError.value = false
+  step.value = mode.value === 'store' ? 'amount' : 'code'
 }
+
+/** 切換身分時整個流程重來，避免拿著店家選到的券跑到借問站核銷 */
+watch(mode, () => {
+  picked.value = null
+  amount.value = ''
+  codeInput.value = ''
+  codeError.value = false
+  step.value = 'pick'
+})
 
 function toCodeStep() {
   if (!meetsMin.value) return
@@ -62,7 +101,7 @@ function tapKey(k: string) {
 
   if (codeInput.value.length === 4) {
     setTimeout(() => {
-      if (codeInput.value !== MERCHANT.code) {
+      if (codeInput.value !== desk.value.code) {
         codeError.value = true
         codeInput.value = ''
         return
@@ -71,7 +110,7 @@ function tapKey(k: string) {
       if (target) {
         target.status = 'used'
         target.usedAt = '2026.09.20 14:51'
-        target.usedStore = MERCHANT.name
+        target.usedStore = desk.value.name
       }
       todayLog.value.unshift({
         time: '14:51',
@@ -101,15 +140,39 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
     <!-- ── 店家端頁首 ───────────────────────────── -->
     <section class="bg-clay-600 text-white">
       <div class="container-page py-7 sm:py-9">
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <!-- 身分切換：同一支核銷端給店家與借問站共用 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            v-for="m in ([
+              { key: 'store', label: '合作店家', icon: 'i-lucide-store' },
+              { key: 'station', label: '借問站', icon: 'i-lucide-map-pin' }
+            ] as const)"
+            :key="m.key"
+            class="flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-xs font-bold transition-colors"
+            :class="mode === m.key ? 'bg-white text-clay-700' : 'bg-white/15 text-white/80 hover:bg-white/25'"
+            @click="mode = m.key"
+          >
+            <UIcon :name="m.icon" class="size-3.5" />{{ m.label }}
+          </button>
+
+          <select
+            v-if="mode === 'station'"
+            v-model="stationId"
+            class="rounded-full bg-white/15 px-3 py-2.5 text-xs font-bold text-white outline-none"
+          >
+            <option v-for="s in STATIONS" :key="s.id" :value="s.id" class="text-ink">{{ s.name }}</option>
+          </select>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div class="flex items-center gap-3.5">
             <span class="grid place-items-center size-12 shrink-0 rounded-2xl bg-white/15 sm:size-14">
-              <UIcon name="i-lucide-store" class="size-6 sm:size-7" />
+              <UIcon :name="desk.icon" class="size-6 sm:size-7" />
             </span>
             <div class="min-w-0">
-              <span class="chip bg-white/20 text-white">店家核銷端</span>
-              <h1 class="mt-1.5 text-xl font-black leading-tight sm:text-2xl">{{ MERCHANT.name }}</h1>
-              <p class="text-[11px] text-white/70">統編 {{ MERCHANT.taxId }} ‧ {{ MERCHANT.contact }}</p>
+              <span class="chip bg-white/20 text-white">{{ desk.label }}</span>
+              <h1 class="mt-1.5 text-xl font-black leading-tight sm:text-2xl">{{ desk.name }}</h1>
+              <p class="text-[11px] text-white/70">{{ desk.sub }}</p>
             </div>
           </div>
 
@@ -138,31 +201,33 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
             <li v-for="(s, i) in steps" :key="s" class="flex flex-1 items-center gap-2">
               <span
                 class="grid place-items-center size-6 shrink-0 rounded-full text-[10px] font-black"
-                :class="['pick', 'amount', 'code', 'done'].indexOf(step) >= i ? 'bg-clay-500 text-white' : 'bg-paper-deep text-ink-faint'"
+                :class="stepOrder.indexOf(step) >= i ? 'bg-clay-500 text-white' : 'bg-paper-deep text-ink-faint'"
               >
-                <UIcon
-                  v-if="['pick', 'amount', 'code', 'done'].indexOf(step) > i"
-                  name="i-lucide-check"
-                  class="size-3.5"
-                />
+                <UIcon v-if="stepOrder.indexOf(step) > i" name="i-lucide-check" class="size-3.5" />
                 <template v-else>{{ i + 1 }}</template>
               </span>
               <span
                 class="hidden text-xs font-bold sm:block"
-                :class="['pick', 'amount', 'code', 'done'].indexOf(step) >= i ? 'text-ink' : 'text-ink-faint'"
+                :class="stepOrder.indexOf(step) >= i ? 'text-ink' : 'text-ink-faint'"
               >{{ s }}</span>
               <span
                 v-if="i < steps.length - 1"
                 class="hidden h-0.5 flex-1 rounded-full sm:block"
-                :class="['pick', 'amount', 'code', 'done'].indexOf(step) > i ? 'bg-clay-500' : 'bg-paper-deep'"
+                :class="stepOrder.indexOf(step) > i ? 'bg-clay-500' : 'bg-paper-deep'"
               />
             </li>
           </ol>
 
           <!-- 步驟 1：出示券 -->
           <section v-if="step === 'pick'" class="mt-5">
-            <h2 class="text-lg font-black sm:text-xl">請消費者出示優惠券</h2>
-            <p class="mt-1 text-xs text-ink-soft">店家零設備、零掃描；由店家在本頁選取消費者出示的券</p>
+            <h2 class="text-lg font-black sm:text-xl">
+              請旅客出示{{ mode === 'store' ? '優惠券' : '好禮兌換券' }}
+            </h2>
+            <p class="mt-1 text-xs text-ink-soft">
+              {{ mode === 'store'
+                ? '店家零設備、零掃描；由店家在本頁選取消費者出示的券'
+                : '借問站人員在本頁選取旅客出示的兌換券，核銷後交付好禮' }}
+            </p>
 
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
               <button v-for="c in usable" :key="c.id" class="block w-full text-left" @click="pick(c)">
@@ -175,9 +240,11 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
               class="mt-4 rounded-card border-2 border-dashed border-paper-deep p-10 text-center"
             >
               <UIcon name="i-lucide-ticket" class="size-9 text-ink-faint" />
-              <p class="mt-2 text-sm text-ink-soft">目前沒有可核銷的券</p>
-              <UButton to="/checkin" color="neutral" variant="outline" size="sm" class="mt-3 rounded-full font-bold">
-                去打卡領券
+              <p class="mt-2 text-sm text-ink-soft">
+                目前沒有可核銷的{{ mode === 'store' ? '折抵券' : '好禮兌換券' }}
+              </p>
+              <UButton to="/member" color="neutral" variant="outline" size="sm" class="mt-3 rounded-full font-bold">
+                去護照兌換
               </UButton>
             </div>
 
@@ -309,8 +376,11 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
             <div class="mt-4 card max-w-md p-4">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-ink-soft">券別 / 消費</span>
-                <span class="font-bold">${{ picked.value }} 券 ‧ 消費 ${{ amountNum }}</span>
+                <span class="text-ink-soft">{{ mode === 'store' ? '券別 / 消費' : '兌換品項' }}</span>
+                <span class="font-bold">
+                  <template v-if="mode === 'store'">${{ picked.value }} 券 ‧ 消費 ${{ amountNum }}</template>
+                  <template v-else>{{ picked.name }}</template>
+                </span>
               </div>
               <div class="mt-1.5 flex items-center justify-between text-sm">
                 <span class="text-ink-soft">券碼</span>
@@ -324,7 +394,7 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
               size="lg"
               class="mt-4 max-w-md rounded-full font-bold"
               block
-              @click="step = 'amount'"
+              @click="step = mode === 'store' ? 'amount' : 'pick'"
             >上一步</UButton>
           </section>
 
@@ -334,19 +404,27 @@ const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
               <div class="bg-moss-50 px-6 py-10 text-center">
                 <UIcon name="i-lucide-circle-check-big" class="size-16 text-moss-600" />
                 <h2 class="mt-3 text-2xl font-black">核銷完成</h2>
-                <p class="mt-1.5 text-xs text-ink-soft">券已扣除，本筆將列入本週核銷請款</p>
+                <p class="mt-1.5 text-xs text-ink-soft">
+                  {{ mode === 'store' ? '券已扣除，本筆將列入本週核銷請款' : '券已扣除，請將好禮交付旅客' }}
+                </p>
               </div>
 
               <dl class="divide-y divide-paper-deep px-5">
                 <div class="flex justify-between py-3 text-sm">
-                  <dt class="text-ink-soft">券面額</dt><dd class="font-bold">${{ picked.value }}</dd>
+                  <dt class="text-ink-soft">{{ mode === 'store' ? '券面額' : '兌換品項' }}</dt>
+                  <dd class="font-bold">
+                    <template v-if="mode === 'store'">${{ picked.value }}</template>
+                    <template v-else>{{ picked.name }}</template>
+                  </dd>
                 </div>
-                <div class="flex justify-between py-3 text-sm">
-                  <dt class="text-ink-soft">消費金額</dt><dd class="font-bold">${{ amountNum }}</dd>
-                </div>
-                <div class="flex justify-between py-3 text-sm">
-                  <dt class="text-ink-soft">消費者實付</dt><dd class="font-bold">${{ payBySelf }}</dd>
-                </div>
+                <template v-if="mode === 'store'">
+                  <div class="flex justify-between py-3 text-sm">
+                    <dt class="text-ink-soft">消費金額</dt><dd class="font-bold">${{ amountNum }}</dd>
+                  </div>
+                  <div class="flex justify-between py-3 text-sm">
+                    <dt class="text-ink-soft">消費者實付</dt><dd class="font-bold">${{ payBySelf }}</dd>
+                  </div>
+                </template>
                 <div class="flex justify-between py-3 text-sm">
                   <dt class="text-ink-soft">券碼</dt>
                   <dd class="font-mono font-bold tracking-wider">{{ picked.code }}</dd>

@@ -44,13 +44,13 @@ const steps = [
     key: 'stamp',
     art: LEVELS[1]!.art,
     title: '完成任務得點數',
-    desc: '到站點現場掃碼或定位蓋章，每個任務依難度可得 100～500 點。'
+    desc: '打卡、食農體驗、iRent 租車都算任務，依難度可得 100～500 點。'
   },
   {
     key: 'redeem',
     art: '/images/art/seafood-plate.webp',
-    title: '升級兌換優惠',
-    desc: '累積點數達門檻自動升級，在兌換專區換該等級的專屬優惠。'
+    title: '升級兌換抽獎',
+    desc: '點數持續累積：達門檻自動升級、換各等級專屬優惠，每 1,000 點還有一次抽獎資格。'
   }
 ]
 
@@ -82,7 +82,7 @@ const faqItems = [
   { label: '優惠券怎麼用？', content: '到指定店家出示優惠券即可兌換。' },
   {
     label: '點數怎麼拿？',
-    content: `註冊即得 ${CAMPAIGN.signupBonus} 點；之後每完成一個任務（到站點打卡），依難度可得 100～500 點。累積達 ${LEVELS.map((l) => toComma(l.threshold)).join('／')} 點分別升級為等級一、二、三，最高累積 ${toComma(CAMPAIGN.quota)} 點，達上限後打卡不再加點。`
+    content: `註冊即得 ${CAMPAIGN.signupBonus} 點；之後共有 ${TASKS.length} 個任務（站點打卡、食農教育、iRent 租車），依難度可得 100～500 點。累積達 ${LEVELS.map((l) => toComma(l.threshold)).join('／')} 點分別升級為等級一、二、三。點數持續累積不歸零。`
   },
   {
     label: '點數怎麼用？',
@@ -216,7 +216,7 @@ const faqItems = [
         <div v-for="s in [
           { k: '活動亮點', v: `${ALL_SPOTS.length} 處` },
           { k: '合作店家', v: `${CAMPAIGN.storeCount} 家` },
-          { k: '最高累積', v: `${toComma(CAMPAIGN.quota)} 點` }
+          { k: '任務總數', v: `${TASKS.length} 個` }
         ]" :key="s.k" class="px-3 text-center">
           <dt class="text-[11px] font-bold text-ink-faint">{{ s.k }}</dt>
           <!-- 手機一欄只有 110px 左右，「1,000 點」在 text-2xl 會斷成兩行，縮一級並禁止換行 -->
@@ -324,17 +324,51 @@ const faqItems = [
       </p>
       <p class="mt-2 flex items-start gap-1.5 text-xs text-ink-faint">
         <UIcon name="i-lucide-info" class="mt-px size-3.5 shrink-0" />
-        註冊即送 {{ CAMPAIGN.signupBonus }} 點（直接達等級一）；累積點數上限 {{ toComma(CAMPAIGN.quota) }} 點，達上限後打卡不再加點。
+        註冊即送 {{ CAMPAIGN.signupBonus }} 點（直接達等級一）；點數持續累積不歸零，每 {{ toComma(CAMPAIGN.lotteryUnit) }} 點另可取得一次抽獎資格。
       </p>
     </section>
 
-    <!-- ══ 遊樂路線：文字頁籤 ＋ A→B→C 動線 ═══════ -->
+    <!-- ══ 任務牆入口：三類任務各一張卡 ═══════════ -->
     <section class="container-page pt-12 sm:pt-16">
       <SectionHead
-        title="遊樂路線"
-        :sub="`${ROUTES.length} 條路線，選一條走一趟`"
+        title="任務牆"
+        :sub="`${TASKS.length} 個任務，完成就有點數`"
+        to="/tasks"
+        more="看全部任務"
+      />
+
+      <ul class="mt-5 grid gap-4 md:grid-cols-3">
+        <li v-for="k in TASK_KINDS" :key="k.key">
+          <NuxtLink
+            to="/tasks"
+            class="card group flex h-full flex-col p-5 transition-shadow hover:shadow-pop sm:p-6"
+          >
+            <div class="flex items-center gap-3">
+              <span class="grid place-items-center size-11 shrink-0 rounded-2xl bg-vermilion-50 text-vermilion-600">
+                <UIcon :name="k.icon" class="size-6" />
+              </span>
+              <div class="min-w-0">
+                <p class="font-black">{{ k.label }}</p>
+                <p class="text-[11px] text-ink-faint">{{ tasksOfKind(k.key).length }} 個任務</p>
+              </div>
+            </div>
+            <p class="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">{{ k.desc }}</p>
+            <p class="mt-3 flex items-center gap-1 text-xs font-bold text-sky-600">
+              去看看
+              <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-hover:translate-x-0.5" />
+            </p>
+          </NuxtLink>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ══ 推薦路線：文字頁籤 ＋ A→B→C 動線 ═══════ -->
+    <section class="container-page pt-12 sm:pt-16">
+      <SectionHead
+        title="推薦路線"
+        :sub="`${ROUTES.length} 條路線，把打卡任務串成一趟行程`"
         to="/events"
-        more="看全部站點"
+        more="看全部路線"
       />
 
       <!-- 路線頁籤。純文字，手機自動換行成兩列 -->
@@ -385,7 +419,7 @@ const faqItems = [
                 <li>
                   <NuxtLink
                     :to="`/checkin?spot=${id}`"
-                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors"
+                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-2 text-xs font-bold transition-colors"
                     :class="checkedIn.includes(id)
                       ? 'border-moss-500 bg-moss-50 text-moss-700'
                       : 'border-paper-deep bg-white text-ink hover:border-ink/40'"

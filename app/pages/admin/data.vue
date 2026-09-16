@@ -1,17 +1,32 @@
 <script setup lang="ts">
+import type { Task, TaskKind } from '~/composables/useCampaign'
+
 definePageMeta({ layout: 'admin' })
 
 const { canEdit } = useAdmin()
 
-type Tab = 'members' | 'spots' | 'stores' | 'params'
+type Tab = 'members' | 'tasks' | 'spots' | 'stores' | 'params'
 const tab = ref<Tab>('members')
 
 const tabs: { key: Tab; label: string; count?: number }[] = [
   { key: 'members', label: '會員', count: MEMBERS.length },
-  { key: 'spots', label: '景點與 QR', count: ALL_SPOTS.length },
+  { key: 'tasks', label: '任務', count: TASKS.length },
+  { key: 'spots', label: '站點', count: ALL_SPOTS.length },
   { key: 'stores', label: '合作店家', count: STORES.length },
   { key: 'params', label: '活動參數' }
 ]
+
+/** 任務分頁：依類型篩選 */
+const taskFilter = ref<'all' | TaskKind>('all')
+const visibleTasks = computed(() =>
+  taskFilter.value === 'all' ? TASKS : tasksOfKind(taskFilter.value)
+)
+/** 任務的重複規則，後台要一眼看出哪些可以累積 */
+const repeatRule = (t: Task) => {
+  if (t.milestone) return `累積 ${t.milestone.need} 次自動完成`
+  if (t.rentalFlag) return '任一筆符合條件的租車'
+  return '每人限一次'
+}
 
 const memberFilter = ref<'all' | 'local' | 'visitor' | 'dup'>('all')
 const visibleMembers = computed(() => {
@@ -36,10 +51,10 @@ const spotFilters = computed(() => [
 
 function exportMembers() {
   downloadCsv('會員清單.csv', [
-    ['姓名', '信箱', '身分', '會員等級', '累積點數', '已兌換點數', '去重註記'],
+    ['姓名', '信箱', '身分', '會員等級', '累積點數', '已兌換點數', '抽獎次數', '去重註記'],
     ...MEMBERS.map((m) => [
       m.name, m.email, m.identity === 'local' ? '雲林在地' : '外地旅客',
-      LEVELS[m.level - 1]!.name, m.earned, m.spent, m.dupFlag ? '疑似重複' : ''
+      LEVELS[m.level - 1]!.name, m.earned, m.spent, m.draws, m.dupFlag ? '疑似重複' : ''
     ])
   ])
 }
@@ -82,13 +97,13 @@ function exportStores() {
               { key: 'dup', label: '疑似重複' }
             ] as const)"
             :key="f.key"
-            class="rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors"
+            class="rounded-full px-2.5 py-2 text-[11px] font-bold transition-colors"
             :class="memberFilter === f.key ? 'bg-ink text-white' : 'bg-paper-soft text-ink-soft'"
             @click="memberFilter = f.key"
           >{{ f.label }}</button>
 
           <button
-            class="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-moss-500 px-3 py-1.5 text-[11px] font-bold text-white"
+            class="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-moss-500 px-3 py-2.5 text-[11px] font-bold text-white"
             @click="exportMembers"
           ><UIcon name="i-lucide-download" class="size-3.5" />匯出</button>
         </div>
@@ -103,6 +118,7 @@ function exportStores() {
                 <th class="py-2 pr-3 font-bold">等級</th>
                 <th class="py-2 pr-3 text-right font-bold">累積點數</th>
                 <th class="py-2 pr-3 text-right font-bold">已兌換</th>
+                <th class="py-2 pr-3 text-right font-bold">抽獎次數</th>
                 <th class="py-2 font-bold">狀態</th>
               </tr>
             </thead>
@@ -119,6 +135,7 @@ function exportStores() {
                 <td class="py-2 pr-3">{{ LEVELS[m.level - 1]!.name }}</td>
                 <td class="py-2 pr-3 text-right tabular-nums">{{ toComma(m.earned) }}</td>
                 <td class="py-2 pr-3 text-right tabular-nums">{{ toComma(m.spent) }}</td>
+                <td class="py-2 pr-3 text-right tabular-nums">{{ m.draws }}</td>
                 <td class="py-2">
                   <span v-if="m.dupFlag" class="chip bg-vermilion-100 text-vermilion-700">疑似重複</span>
                   <span v-else class="text-ink-faint">正常</span>
@@ -134,20 +151,78 @@ function exportStores() {
       </div>
     </section>
 
-    <!-- ── 景點與 QR ────────────────────────────── -->
+    <!-- ── 任務 ─────────────────────────────────── -->
+    <section v-else-if="tab === 'tasks'" class="mt-4">
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
+            v-for="f in ([{ key: 'all', label: `全部 ${TASKS.length}` }, ...TASK_KINDS.map((k) => ({ key: k.key, label: `${k.label} ${tasksOfKind(k.key).length}` }))] as const)"
+            :key="f.key"
+            class="rounded-full px-2.5 py-2 text-[11px] font-bold transition-colors"
+            :class="taskFilter === f.key ? 'bg-ink text-white' : 'bg-paper-soft text-ink-soft'"
+            @click="taskFilter = f.key"
+          >{{ f.label }}</button>
+
+          <button
+            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2.5 text-[11px] font-bold"
+            :class="canEdit ? 'bg-sky-500 text-white' : 'bg-paper-deep text-ink-faint'"
+            :disabled="!canEdit"
+          ><UIcon name="i-lucide-plus" class="size-3.5" />新增任務</button>
+        </div>
+
+        <div class="mt-3.5 overflow-x-auto">
+          <table class="w-full min-w-[640px] text-xs">
+            <thead>
+              <tr class="border-b-2 border-paper-deep text-left text-ink-soft">
+                <th class="py-2 pr-3 font-bold">任務</th>
+                <th class="py-2 pr-3 font-bold">類型</th>
+                <th class="py-2 pr-3 text-right font-bold">點數</th>
+                <th class="py-2 pr-3 font-bold">認定方式</th>
+                <th class="py-2 font-bold">重複規則</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="t in visibleTasks" :key="t.id" class="border-b border-paper-deep">
+                <td class="py-2 pr-3 font-bold">{{ t.title }}</td>
+                <td class="py-2 pr-3">
+                  <span class="chip bg-paper-soft text-ink-soft">
+                    {{ TASK_KINDS.find((k) => k.key === t.kind)!.label }}
+                  </span>
+                </td>
+                <td class="py-2 pr-3 text-right font-bold tabular-nums text-marigold-700">{{ t.points }}</td>
+                <td class="py-2 pr-3 text-ink-soft">
+                  <template v-if="t.kind === 'checkin'">現場定位</template>
+                  <template v-else-if="t.codeLabel">輸入{{ t.codeLabel }}</template>
+                  <template v-else>由租車紀錄推導</template>
+                </td>
+                <td class="py-2 text-ink-soft">{{ repeatRule(t) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
+          共 {{ TASKS.length }} 個任務，總點數 {{ toComma(TASKS.reduce((s, t) => s + t.points, 0)) }} 點。
+          一般任務每人限完成一次；租車與食農教育的里程碑以累積次數自動認定，
+          同一筆訂單或同一組活動代碼僅計算一次。任務內容與點數目前為示意值，待主辦提供正式清單。
+        </p>
+      </div>
+    </section>
+
+    <!-- ── 站點 ─────────────────────────────────── -->
     <section v-else-if="tab === 'spots'" class="mt-4">
       <div class="card p-4">
         <div class="flex flex-wrap items-center gap-1.5">
           <button
             v-for="f in spotFilters"
             :key="f.key"
-            class="rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors"
+            class="rounded-full px-2.5 py-2 text-[11px] font-bold transition-colors"
             :class="spotFilter === f.key ? 'bg-ink text-white' : 'bg-paper-soft text-ink-soft'"
             @click="spotFilter = f.key"
           >{{ f.label }}</button>
 
           <button
-            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold"
+            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2.5 text-[11px] font-bold"
             :class="canEdit ? 'bg-sky-500 text-white' : 'bg-paper-deep text-ink-faint'"
             :disabled="!canEdit"
           ><UIcon name="i-lucide-plus" class="size-3.5" />新增景點</button>
@@ -157,12 +232,11 @@ function exportStores() {
           <table class="w-full min-w-[600px] text-xs">
             <thead>
               <tr class="border-b-2 border-paper-deep text-left text-ink-soft">
-                <th class="py-2 pr-3 font-bold">景點</th>
+                <th class="py-2 pr-3 font-bold">站點</th>
                 <th class="py-2 pr-3 font-bold">鄉鎮市</th>
                 <th class="py-2 pr-3 text-right font-bold">任務點數</th>
-                <th class="py-2 pr-3 font-bold">打卡方式</th>
-                <th class="py-2 pr-3 font-bold">經緯度</th>
-                <th class="py-2 font-bold">QR</th>
+                <th class="py-2 pr-3 text-right font-bold">判定半徑</th>
+                <th class="py-2 font-bold">經緯度</th>
               </tr>
             </thead>
             <tbody>
@@ -174,15 +248,9 @@ function exportStores() {
                 </td>
                 <td class="py-2 pr-3 text-ink-soft">{{ s.town }}</td>
                 <td class="py-2 pr-3 text-right font-bold tabular-nums text-marigold-700">{{ s.points }}</td>
-                <td class="py-2 pr-3 text-ink-soft">
-                  {{ hasQr(s) ? '掃碼／定位' : `定位（${radiusOf(s)} 公尺）` }}
-                </td>
-                <td class="py-2 pr-3 tabular-nums text-ink-soft">
+                <td class="py-2 pr-3 text-right tabular-nums text-ink-soft">{{ radiusOf(s) }} m</td>
+                <td class="py-2 tabular-nums text-ink-soft">
                   {{ s.lat.toFixed(4) }}, {{ s.lng.toFixed(4) }}
-                </td>
-                <td class="py-2">
-                  <span v-if="hasQr(s)" class="font-mono text-[10px] font-bold text-ink-soft">YL-{{ s.id.toUpperCase() }}</span>
-                  <span v-else class="text-ink-faint">—</span>
                 </td>
               </tr>
             </tbody>
@@ -190,9 +258,9 @@ function exportStores() {
         </div>
 
         <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
-          共 {{ ALL_SPOTS.length }} 個站點，其中 {{ ALL_SPOTS.filter(hasQr).length }} 個設有唯一 QR code，
-          其餘開放場域以定位打卡。打卡時擷取經緯度與站點座標比對，並綁定會員身分去重。
-          任務點數依難度訂為 100～500 點，目前為示意值，待主辦提供正式點數表。
+          共 {{ ALL_SPOTS.length }} 個站點，一律以定位打卡，不設置實體 QR code。
+          打卡時擷取經緯度與站點座標比對，於判定半徑內即記入，並綁定會員身分去重。
+          面狀場域（步道、濕地、農業區）的半徑另行放大。
         </p>
       </div>
     </section>
@@ -205,7 +273,7 @@ function exportStores() {
             共 {{ CAMPAIGN.storeCount }} 家合作店家，以下為核銷金額前 {{ STORES.length }} 名
           </p>
           <button
-            class="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-moss-500 px-3 py-1.5 text-[11px] font-bold text-white"
+            class="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-moss-500 px-3 py-2.5 text-[11px] font-bold text-white"
             @click="exportStores"
           ><UIcon name="i-lucide-download" class="size-3.5" />匯出</button>
         </div>
@@ -260,12 +328,15 @@ function exportStores() {
               { label: '註冊禮', value: `${CAMPAIGN.signupBonus} 點（直接達等級一）` },
               { label: '任務點數', value: `每站依難度 ${Math.min(...ALL_SPOTS.map((s) => s.points))}～${Math.max(...ALL_SPOTS.map((s) => s.points))} 點（示意值）` },
               { label: '等級門檻', value: LEVELS.map((l) => `${l.name} ${toComma(l.threshold)}`).join('／') },
-              { label: '每人點數上限', value: `${toComma(CAMPAIGN.quota)} 點，封頂後打卡不再加點` },
-              { label: '兌換品項', value: REWARDS.map((r) => `${r.name}（${LEVELS[r.minLevel - 1]!.name}起）`).join('、') },
+              { label: '點數上限', value: '不設上限，持續累積不歸零；預算改由獎項限量控管' },
+              { label: '抽獎資格', value: `每累積 ${toComma(CAMPAIGN.lotteryUnit)} 點 ＋1 次，每完成一條推薦路線 ＋1 次` },
+              { label: '任務數', value: TASK_KINDS.map((k) => `${k.label} ${tasksOfKind(k.key).length}`).join('、') },
+              { label: '兌換品項', value: REWARDS.map((r) => `${r.name} ${r.cost} 點（${stockLeft(r) === null ? '不限量' : `限量 ${r.stock}，剩 ${stockLeft(r)}`}）`).join('；') },
+              { label: '借問站', value: `${STATIONS.length} 處：${STATIONS.map((s) => s.town).join('、')}` },
               { label: '券面額', value: '250、500 兩種，不找零' },
               { label: '最低消費', value: `一律 ${CAMPAIGN.minSpend} 元（不分級）` },
               { label: '券有效期', value: `兌換後 ${CAMPAIGN.couponValidDays} 天，且不超過活動結束日` },
-              { label: '站點數', value: `${ALL_SPOTS.length} 站（QR ${ALL_SPOTS.filter(hasQr).length}、定位 ${ALL_SPOTS.length - ALL_SPOTS.filter(hasQr).length}）` },
+              { label: '站點數', value: `${ALL_SPOTS.length} 站，一律定位打卡（不設 QR code）` },
               { label: '合作店家', value: `約 ${CAMPAIGN.storeCount} 家` },
               { label: '活動總期程', value: `${CAMPAIGN.startDate} – ${CAMPAIGN.endDate}（2 個月）` },
               { label: '結算', value: '週結算核銷請款' }

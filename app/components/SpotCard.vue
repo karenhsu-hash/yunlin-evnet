@@ -39,8 +39,8 @@ const { isCheckedIn } = useCampaign()
           <UIcon name="i-lucide-map-pin" class="size-3.5" />{{ spot.distanceKm }} km
         </span>
         <span class="flex items-center gap-1">
-          <UIcon :name="hasQr(spot) ? 'i-lucide-scan-line' : 'i-lucide-map-pin-check'" class="size-3.5" />
-          {{ hasQr(spot) ? '掃碼或定位蓋章' : '定位蓋章' }}
+          <UIcon name="i-lucide-map-pin-check" class="size-3.5" />
+          定位蓋章 ‧ {{ radiusOf(spot) }} 公尺內
         </span>
       </div>
     </div>

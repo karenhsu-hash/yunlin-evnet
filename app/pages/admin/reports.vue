@@ -57,7 +57,7 @@ const GA = [
   { label: '網站工作階段', value: '186,420', hint: '較上週 +8.2%' },
   { label: '不重複使用者', value: '58,930', hint: '較上週 +6.4%' },
   { label: '平均停留時間', value: '3 分 12 秒', hint: '較上週 +4.1%' },
-  { label: '掃碼頁跳出率', value: '18.6%', hint: '較上週 -2.3%' }
+  { label: '集章頁跳出率', value: '18.6%', hint: '較上週 -2.3%' }
 ]
 </script>
 
@@ -96,7 +96,7 @@ const GA = [
           </select>
           <!-- 匯出兩種權限皆可（主辦唯讀亦得檢視與匯出） -->
           <button
-            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-moss-500 px-3.5 py-1.5 text-xs font-bold text-white"
+            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-moss-500 px-3.5 py-2.5 text-xs font-bold text-white"
             @click="exportWeekly"
           ><UIcon name="i-lucide-download" class="size-3.5" />匯出 Excel</button>
         </div>
@@ -152,7 +152,7 @@ const GA = [
       <div class="mt-3 card p-4">
         <div class="flex items-center justify-between gap-3">
           <h3 class="font-black">逐週明細</h3>
-          <button class="inline-flex shrink-0 items-center gap-1 rounded-full bg-moss-500 px-3.5 py-1.5 text-xs font-bold text-white" @click="exportSummary">
+          <button class="inline-flex shrink-0 items-center gap-1 rounded-full bg-moss-500 px-3.5 py-2.5 text-xs font-bold text-white" @click="exportSummary">
             <UIcon name="i-lucide-download" class="size-3.5" />匯出 Excel
           </button>
         </div>

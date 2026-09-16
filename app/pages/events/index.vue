@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * 活動景點 —— 以「遊樂路線」為主結構。
+ * 推薦路線 —— 把多個打卡任務組合成可以照著走的行程。
+ * 單一任務與點數在任務牆（/tasks），這一頁只管「怎麼串成一趟旅行」。
  *
  * 旅客的心智模型是「今天走哪一條」，所以頁籤是路線。每一站是一個任務，
  * 站點卡與路線膠囊上標出任務點數，讓人挑下一站時知道值多少。
@@ -61,8 +62,8 @@ watch(activeRouteId, () => {
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/85 to-paper/30" />
 
       <div class="container-page py-10">
-        <span class="chip bg-vermilion-500 text-white">{{ ROUTES.length }} 條路線 ‧ 打卡升級</span>
-        <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">活動景點</h1>
+        <span class="chip bg-vermilion-500 text-white">{{ ROUTES.length }} 條路線 ‧ 走完加碼抽獎</span>
+        <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">推薦路線</h1>
         <p class="mt-2 max-w-lg text-sm text-ink-soft sm:text-base">
           選一條路線走一趟，{{ ALL_SPOTS.length }} 個站點串起雲林的海味、田野與山線。
         </p>
@@ -131,7 +132,7 @@ watch(activeRouteId, () => {
                 <UIcon v-if="i > 0" name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-ink-faint" />
                 <li>
                   <button
-                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors"
+                    class="flex items-center gap-1.5 rounded-full border px-2.5 py-2 text-xs font-bold transition-colors"
                     :class="isCheckedIn(id)
                       ? 'border-moss-500 bg-moss-50 text-moss-700'
                       : 'border-paper-deep bg-white text-ink hover:border-ink/40'"
@@ -279,20 +280,20 @@ watch(activeRouteId, () => {
         <h2 class="border-b-2 border-ink pb-2.5 text-xl font-black text-ink sm:text-2xl">玩法說明</h2>
 
         <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
-          本活動規劃 {{ ROUTES.length }} 條遊樂路線，串起雲林 {{ ALL_SPOTS.length }} 個活動站點。
-          每一站就是一個觀光護照任務，於站點現場掃碼或定位完成打卡即可獲得點數；
-          累積點數達到門檻，會員等級自動提升，並可兌換該等級對應的專屬優惠。
+          本活動規劃 {{ ROUTES.length }} 條推薦路線，把雲林 {{ ALL_SPOTS.length }} 個打卡任務串成可以照著走的行程。
+          每一站就是一個觀光護照任務，於站點現場以定位確認抵達即可獲得點數；
+          走完整條路線另可取得一次抽獎資格。
         </p>
 
         <ol class="mt-6 space-y-4">
           <li
             v-for="(t, i) in [
               `${ROUTES.length} 條路線為建議動線，不限定走訪順序，也不限定只能完成一條。`,
-              `完成會員註冊即獲得 ${CAMPAIGN.signupBonus} 點，直接成為等級一「${LEVELS[0]!.name}」。`,
-              '每個任務依難度不同，可獲得 100～500 點，點數標示於各站點。',
-              `累積 ${LEVELS.map((l) => toComma(l.threshold)).join('／')} 點，分別升級為等級一、二、三；累積點數上限為 ${toComma(CAMPAIGN.quota)} 點。`,
-              '點數可於兌換專區換取符合目前等級的優惠；兌換扣除點數，但不影響已取得的等級。',
-              '同一會員於同一站點僅計算一次，重複打卡不重複計入。'
+              '路線上的每一站都是打卡任務，依難度可得 100～500 點，點數標示於各站點。',
+              '打卡一律以定位認定：走進站點的判定半徑內，按「我已抵達」即可蓋章，不需要掃描 QR code。',
+              '同一會員於同一站點僅計算一次，重複打卡不重複計入。',
+              `走完整條路線可額外取得 1 次抽獎資格；點數每累積 ${toComma(CAMPAIGN.lotteryUnit)} 點亦得 1 次。`,
+              '食農教育與 iRent 租車等指定任務請見任務牆，完成後同樣累積點數。'
             ]"
             :key="i"
             class="flex gap-3.5"

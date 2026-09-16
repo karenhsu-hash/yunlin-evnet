@@ -31,11 +31,6 @@ export interface Spot {
   mapX: number
   mapY: number
   /**
-   * 現場是否設有實體 QR code。步道、濕地、出海口這類開放場域沒有立牌可掛，
-   * 標為 false 之後前端只提供定位打卡。未填視為 true。
-   */
-  hasQr?: boolean
-  /**
    * 定位判定半徑（公尺）。未填用 CAMPAIGN.geoRadiusM。
    * 步道、濕地、農業區這種「面」而不是「點」的場域要放大，否則旅客站在園區裡也判定不到。
    */
@@ -44,10 +39,21 @@ export interface Spot {
   points: number
 }
 
+/**
+ * 兌換到手的券。兩種通路：
+ *   store　　合作店家折抵用的優惠券，有面額
+ *   station　借問站領取的限量好禮，沒有面額，核銷後領實體
+ */
 export interface Coupon {
   id: string
-  /** 面額；由點數 1:1 兌換而來 */
-  value: 250 | 500
+  /** 來源獎項 */
+  rewardId: string
+  name: string
+  /** 面額（店家折抵用）；借問站好禮為 0 */
+  value: number
+  /** 兌換時花掉的點數 */
+  cost: number
+  channel: 'store' | 'station'
   status: 'unused' | 'used' | 'expired'
   code: string
   issuedAt: string
@@ -93,17 +99,17 @@ const SPOT_DATA: Omit<Spot, 'points'>[] = [
 
   { id: 'g1', name: '成龍濕地', town: '口湖鄉', desc: '國際環境藝術節的水上裝置', distanceKm: 17.2, lat: 23.5183, lng: 120.1719, icon: 'i-lucide-bird', photo: '/images/spots/g1.jpg', art: '/images/art/paddy.webp', mapX: 10, mapY: 78 },
   { id: 'g2', name: '虎尾鐵橋', town: '虎尾鎮', desc: '橫跨虎尾溪的百年糖鐵橋', distanceKm: 8.4, lat: 23.7095, lng: 120.4392, icon: 'i-lucide-train-front', photo: '/images/spots/g2.jpg', art: '/images/art/farmhouse.webp', mapX: 55, mapY: 44 },
-  { id: 'g3', name: '草嶺石壁森林步道', town: '古坑鄉', desc: '雲嘉南最高柳杉林與雲海', distanceKm: 42.1, lat: 23.5333, lng: 120.7042, icon: 'i-lucide-trees', photo: '/images/spots/g3.jpg', art: '/images/art/grove.webp', mapX: 90, mapY: 78, hasQr: false, radiusM: 600 },
-  { id: 'g4', name: '五元二角綠廊', town: '古坑鄉', desc: '竹編涼亭串起的社區綠廊', distanceKm: 23.4, lat: 23.6408, lng: 120.5747, icon: 'i-lucide-leaf', photo: '/images/spots/g4.jpg', art: '/images/art/tree-round.webp', mapX: 78, mapY: 50, hasQr: false, radiusM: 300 },
-  { id: 'g5', name: '三條崙海水浴場', town: '四湖鄉', desc: '西海岸落日與防風林', distanceKm: 19.8, lat: 23.6389, lng: 120.1636, icon: 'i-lucide-sunset', photo: '/images/spots/g5.jpg', art: '/images/art/sun.webp', mapX: 8, mapY: 58, hasQr: false, radiusM: 400 },
-  { id: 'g6', name: '濁水溪出海口', town: '麥寮鄉', desc: '台灣最長河川的入海處', distanceKm: 28.6, lat: 23.8447, lng: 120.1608, icon: 'i-lucide-waves', photo: '/images/spots/g6.jpg', art: '/images/art/boat.webp', mapX: 16, mapY: 12, hasQr: false, radiusM: 500 },
-  { id: 'g7', name: '湖山水庫', town: '斗六市', desc: '環湖步道與壩頂展望台', distanceKm: 20.5, lat: 23.6931, lng: 120.6083, icon: 'i-lucide-droplets', photo: '/images/spots/g7.jpg', art: '/images/art/paddy.webp', mapX: 86, mapY: 40, hasQr: false, radiusM: 500 },
+  { id: 'g3', name: '草嶺石壁森林步道', town: '古坑鄉', desc: '雲嘉南最高柳杉林與雲海', distanceKm: 42.1, lat: 23.5333, lng: 120.7042, icon: 'i-lucide-trees', photo: '/images/spots/g3.jpg', art: '/images/art/grove.webp', mapX: 90, mapY: 78, radiusM: 600 },
+  { id: 'g4', name: '五元二角綠廊', town: '古坑鄉', desc: '竹編涼亭串起的社區綠廊', distanceKm: 23.4, lat: 23.6408, lng: 120.5747, icon: 'i-lucide-leaf', photo: '/images/spots/g4.jpg', art: '/images/art/tree-round.webp', mapX: 78, mapY: 50, radiusM: 300 },
+  { id: 'g5', name: '三條崙海水浴場', town: '四湖鄉', desc: '西海岸落日與防風林', distanceKm: 19.8, lat: 23.6389, lng: 120.1636, icon: 'i-lucide-sunset', photo: '/images/spots/g5.jpg', art: '/images/art/sun.webp', mapX: 8, mapY: 58, radiusM: 400 },
+  { id: 'g6', name: '濁水溪出海口', town: '麥寮鄉', desc: '台灣最長河川的入海處', distanceKm: 28.6, lat: 23.8447, lng: 120.1608, icon: 'i-lucide-waves', photo: '/images/spots/g6.jpg', art: '/images/art/boat.webp', mapX: 16, mapY: 12, radiusM: 500 },
+  { id: 'g7', name: '湖山水庫', town: '斗六市', desc: '環湖步道與壩頂展望台', distanceKm: 20.5, lat: 23.6931, lng: 120.6083, icon: 'i-lucide-droplets', photo: '/images/spots/g7.jpg', art: '/images/art/paddy.webp', mapX: 86, mapY: 40, radiusM: 500 },
   { id: 'g8', name: '北港女兒橋', town: '北港鎮', desc: '糖鐵改建，夜間點燈超好拍', distanceKm: 2.9, lat: 23.5761, lng: 120.2986, icon: 'i-lucide-rainbow', photo: '/images/spots/g8.jpg', art: '/images/art/village.webp', mapX: 28, mapY: 56 },
   { id: 'g9', name: '頂溪彩繪社區', town: '虎尾鎮', desc: '屋牆上的貓咪彩繪小村', distanceKm: 11.3, lat: 23.7286, lng: 120.4694, icon: 'i-lucide-palette', photo: '/images/spots/g9.jpg', art: '/images/art/farmhouse.webp', mapX: 62, mapY: 30 },
-  { id: 'g10', name: '樟湖茶園步道', town: '古坑鄉', desc: '梯田茶園與山嵐早晨', distanceKm: 38.7, lat: 23.5619, lng: 120.6653, icon: 'i-lucide-mountain', photo: '/images/spots/g10.jpg', art: '/images/art/hill-green.webp', mapX: 88, mapY: 68, hasQr: false, radiusM: 600 },
+  { id: 'g10', name: '樟湖茶園步道', town: '古坑鄉', desc: '梯田茶園與山嵐早晨', distanceKm: 38.7, lat: 23.5619, lng: 120.6653, icon: 'i-lucide-mountain', photo: '/images/spots/g10.jpg', art: '/images/art/hill-green.webp', mapX: 88, mapY: 68, radiusM: 600 },
 
   // ── 同樣來自 0828 更新內容的首推行程；座標與照片為示意值 ──
-  { id: 'n3', name: '金湖休閒農業區', town: '口湖鄉', desc: '魚塭與濕地交界的農漁村風景', distanceKm: 20.1, lat: 23.5333, lng: 120.1667, icon: 'i-lucide-sprout', photo: '/images/spots/g5.jpg', art: '/images/art/oyster-rack.webp', mapX: 11, mapY: 74, hasQr: false, radiusM: 800 },
+  { id: 'n3', name: '金湖休閒農業區', town: '口湖鄉', desc: '魚塭與濕地交界的農漁村風景', distanceKm: 20.1, lat: 23.5333, lng: 120.1667, icon: 'i-lucide-sprout', photo: '/images/spots/g5.jpg', art: '/images/art/oyster-rack.webp', mapX: 11, mapY: 74, radiusM: 800 },
   { id: 'n4', name: '雲林溪藝文廊帶', town: '斗六市', desc: '縣府主推的水岸光廊與街區彩繪', distanceKm: 15.8, lat: 23.7075, lng: 120.5439, icon: 'i-lucide-palette', photo: '/images/spots/g8.jpg', art: '/images/art/village.webp', mapX: 73, mapY: 36 },
   { id: 'n6', name: '膨鼠森林公園', town: '斗六市', desc: '大型木製溜滑梯與森林系共融遊具', distanceKm: 16.2, lat: 23.7128, lng: 120.5478, icon: 'i-lucide-trees', photo: '/images/spots/g4.jpg', art: '/images/art/tree-pine.webp', mapX: 75, mapY: 33 }
 ]
@@ -186,9 +192,6 @@ export const ROUTES: Route[] = [
   }
 ]
 
-/** 站點現場是否設有實體 QR code */
-export const hasQr = (s: Spot) => s.hasQr !== false
-
 /** 這個站點的定位判定半徑（公尺） */
 export const radiusOf = (s: Spot) => s.radiusM ?? CAMPAIGN.geoRadiusM
 
@@ -242,24 +245,148 @@ export const LEVELS: Level[] = [
   { level: 3, name: '達成會員', threshold: 1000, art: '/images/art/family-four.webp' }
 ]
 
+// ── 任務 ────────────────────────────────────────────
+
 /**
- * 兌換專區的品項。
- * ⚠️ 正式品項待客戶提供；目前以 1 點＝1 元的等值優惠券示意，
- * 等級越高能兌換的面額越大，對應規則表的「可兌換優惠價值」。
+ * 任務是點數的唯一來源（註冊禮除外）。
+ *
+ * 分兩類：
+ *   打卡任務　綁定站點，到現場以定位確認抵達，每站限一次
+ *   指定任務　食農教育與 iRent 租車，沒有座標，以憑證認定，且可累積次數
+ *
+ * 「累積租車 3 次解鎖自駕玩家」這種里程碑，用**計數器推導**而不是做成可重複的任務：
+ * 租車次數是唯一事實，里程碑只讀它，不會有重複發點的風險。
+ */
+export type TaskKind = 'checkin' | 'foodagri' | 'irent'
+
+export const TASK_KINDS: { key: TaskKind; label: string; desc: string; icon: string }[] = [
+  { key: 'checkin', label: '打卡任務', desc: '到站點現場以定位確認抵達，每站限完成一次', icon: 'i-lucide-stamp' },
+  { key: 'foodagri', label: '食農教育', desc: '完成食農食漁體驗後，輸入現場提供的活動代碼', icon: 'i-lucide-sprout' },
+  { key: 'irent', label: 'iRent 租車', desc: '登錄租車訂單編號，次數累積可解鎖里程碑', icon: 'i-lucide-car-front' }
+]
+
+export interface Task {
+  id: string
+  kind: TaskKind
+  title: string
+  desc: string
+  points: number
+  /** 完成後蓋在護照上的印章插圖 */
+  art: string
+  /** 打卡任務綁定的站點 */
+  spotId?: string
+  /** 里程碑：計數器達標即自動完成，不需要另外送憑證 */
+  milestone?: { counter: 'foodagri' | 'irent'; need: number }
+  /** 租車情境任務：任一筆租車紀錄符合此條件即完成 */
+  rentalFlag?: 'inYunlin' | 'electric'
+  /** 憑證欄位標題；有值代表這個任務靠輸入憑證完成 */
+  codeLabel?: string
+}
+
+/** 打卡任務：由站點產生，點數沿用 TASK_POINTS */
+const CHECKIN_TASKS: Task[] = ALL_SPOTS.map((s) => ({
+  id: `chk-${s.id}`,
+  kind: 'checkin' as const,
+  title: s.name,
+  desc: `${s.town} ‧ ${s.desc}`,
+  points: s.points,
+  art: s.art,
+  spotId: s.id
+}))
+
+/** 食農教育：8 個體驗（各一次）＋ 2 個里程碑。⚠️ 內容為示意，待客戶提供正式清單 */
+const FOODAGRI_TASKS: Task[] = [
+  { id: 'fa1', kind: 'foodagri', title: '台灣鯛食魚教育', desc: '認識台灣鯛的養殖與加工，完成食魚教育課程', points: 300, art: '/images/art/seafood-plate.webp', codeLabel: '活動代碼' },
+  { id: 'fa2', kind: 'foodagri', title: '馬蹄蛤下水體驗', desc: '下水摸蛤，認識馬蹄蛤的養殖環境', points: 300, art: '/images/art/clam-bowl.webp', codeLabel: '活動代碼' },
+  { id: 'fa3', kind: 'foodagri', title: '綠金溫室採果', desc: '溫室現採蕃茄與南瓜，認識瓜果從開花到收成', points: 300, art: '/images/art/veggie-basket.webp', codeLabel: '活動代碼' },
+  { id: 'fa4', kind: 'foodagri', title: '金湖友善養殖導覽', desc: '走進魚塭，認識不用藥的友善養殖', points: 300, art: '/images/art/oyster-rack.webp', codeLabel: '活動代碼' },
+  { id: 'fa5', kind: 'foodagri', title: '口湖烏魚子加工體驗', desc: '從整形、日曬到烘烤，做一片自己的烏魚子', points: 300, art: '/images/art/boat.webp', codeLabel: '活動代碼' },
+  { id: 'fa6', kind: 'foodagri', title: '水林地瓜窯食農課', desc: '挖地瓜、堆窯、悶烤，吃一顆自己烤的蜜番薯', points: 300, art: '/images/art/paddy.webp', codeLabel: '活動代碼' },
+  { id: 'fa7', kind: 'foodagri', title: '古坑咖啡烘豆課', desc: '從生豆到手沖，認識台灣咖啡原鄉的風味', points: 300, art: '/images/art/coffee.webp', codeLabel: '活動代碼' },
+  { id: 'fa8', kind: 'foodagri', title: '西螺醬油釀造導覽', desc: '看見黑豆蔭油從入缸到曝曬的一百八十天', points: 300, art: '/images/art/village.webp', codeLabel: '活動代碼' },
+  { id: 'fa-m3', kind: 'foodagri', title: '食農學徒', desc: '累積完成 3 個食農教育體驗', points: 500, art: '/images/art/kids-run.webp', milestone: { counter: 'foodagri', need: 3 } },
+  { id: 'fa-m6', kind: 'foodagri', title: '食農達人', desc: '累積完成 6 個食農教育體驗', points: 500, art: '/images/art/family-four.webp', milestone: { counter: 'foodagri', need: 6 } }
+]
+
+/** iRent 租車：3 個累積里程碑 ＋ 2 個情境任務。全部由「登錄租車紀錄」推導 */
+const IRENT_TASKS: Task[] = [
+  { id: 'ir-m1', kind: 'irent', title: '自駕新手', desc: '完成第 1 次 iRent 租車', points: 300, art: '/images/art/car-family.webp', milestone: { counter: 'irent', need: 1 } },
+  { id: 'ir-m3', kind: 'irent', title: '自駕玩家', desc: '累積 3 次 iRent 租車', points: 400, art: '/images/art/kids-run.webp', milestone: { counter: 'irent', need: 3 } },
+  { id: 'ir-m5', kind: 'irent', title: '自駕達人', desc: '累積 5 次 iRent 租車', points: 500, art: '/images/art/family-four.webp', milestone: { counter: 'irent', need: 5 } },
+  { id: 'ir-yunlin', kind: 'irent', title: '雲林借還車', desc: '於雲林縣內的 iRent 站點借車並還車', points: 300, art: '/images/art/farmhouse.webp', rentalFlag: 'inYunlin' },
+  { id: 'ir-ev', kind: 'irent', title: '電動車體驗', desc: '租用 iRent 電動車完成一趟雲林旅程', points: 300, art: '/images/art/tree-pine.webp', rentalFlag: 'electric' }
+]
+
+export const TASKS: Task[] = [...CHECKIN_TASKS, ...FOODAGRI_TASKS, ...IRENT_TASKS]
+
+export const tasksOfKind = (k: TaskKind) => TASKS.filter((t) => t.kind === k)
+export const taskById = (id: string) => TASKS.find((t) => t.id === id)
+/** 指定任務：非打卡的都算，護照的印章頁用它分區 */
+export const DESIGNATED_TASKS = TASKS.filter((t) => t.kind !== 'checkin')
+
+/** 一筆租車紀錄。inYunlin／electric 由 iRent 訂單資料判定，demo 由使用者勾選 */
+export interface Rental {
+  code: string
+  inYunlin: boolean
+  electric: boolean
+  at: string
+}
+
+/**
+ * 兌換專區的品項。⚠️ 正式品項待客戶提供，以下為示意。
+ * 點數上限拿掉之後，預算改由**限量**控管：總預算＝各獎項發行份數 × 價值，
+ * 不再是人數 × 每人上限。stock 為 null 代表不限量。
  */
 export interface Reward {
   id: string
   name: string
   desc: string
-  /** 所需點數，兌換後即為同面額優惠券 */
-  cost: 250 | 500
+  /** 所需點數 */
+  cost: number
+  /** 折抵面額；借問站好禮為 0 */
+  value: number
   /** 最低會員等級 */
   minLevel: 1 | 2 | 3
+  /** store：合作店家折抵　station：借問站領取 */
+  channel: 'store' | 'station'
+  /** 發行份數；null 為不限量 */
+  stock: number | null
+  /** 已被兌換份數（示意值） */
+  claimed: number
+  /** 每人限兌一次 */
+  oncePerMember?: boolean
 }
 
 export const REWARDS: Reward[] = [
-  { id: 'coupon-250', name: '250 元優惠券', desc: '全縣合作店家消費滿 300 元可折抵', cost: 250, minLevel: 1 },
-  { id: 'coupon-500', name: '500 元優惠券', desc: '全縣合作店家消費滿 300 元可折抵', cost: 500, minLevel: 2 }
+  { id: 'coupon-250', name: '250 元優惠券', desc: '全縣合作店家消費滿 300 元可折抵', cost: 250, value: 250, minLevel: 1, channel: 'store', stock: null, claimed: 1840 },
+  { id: 'coupon-500', name: '500 元優惠券', desc: '全縣合作店家消費滿 300 元可折抵', cost: 500, value: 500, minLevel: 2, channel: 'store', stock: null, claimed: 960 },
+  { id: 'gift-goods', name: '雲林良品伴手禮', desc: '至借問站出示兌換券領取，數量有限', cost: 800, value: 0, minLevel: 2, channel: 'station', stock: 200, claimed: 188, oncePerMember: true },
+  { id: 'gift-tote', name: '限量文創提袋', desc: '活動主視覺聯名款，至借問站領取', cost: 1200, value: 0, minLevel: 3, channel: 'station', stock: 50, claimed: 50, oncePerMember: true }
+]
+
+/** 剩餘份數；不限量回傳 null */
+export const stockLeft = (r: Reward) => (r.stock === null ? null : Math.max(0, r.stock - r.claimed))
+export const isSoldOut = (r: Reward) => stockLeft(r) === 0
+
+/**
+ * 借問站：五處旅遊服務據點，負責限量好禮的核銷與領取。
+ * 核銷碼僅站點人員知道，全程不對旅客顯示。
+ */
+export interface Station {
+  id: string
+  name: string
+  town: string
+  address: string
+  hours: string
+  code: string
+}
+
+export const STATIONS: Station[] = [
+  { id: 'st1', name: '北港朝天宮借問站', town: '北港鎮', address: '北港鎮中山路 178 號', hours: '09:00–18:00', code: '1357' },
+  { id: 'st2', name: '西螺延平老街借問站', town: '西螺鎮', address: '西螺鎮延平路 92 號', hours: '10:00–18:00', code: '2468' },
+  { id: 'st3', name: '斗六太平老街借問站', town: '斗六市', address: '斗六市太平路 55 號', hours: '09:30–19:00', code: '3579' },
+  { id: 'st4', name: '虎尾糖廠借問站', town: '虎尾鎮', address: '虎尾鎮中山路 2 號', hours: '09:00–17:30', code: '4680' },
+  { id: 'st5', name: '口湖遊客中心借問站', town: '口湖鄉', address: '口湖鄉光復路 6 號', hours: '09:00–17:00', code: '5791' }
 ]
 
 export const CAMPAIGN = {
@@ -271,8 +398,12 @@ export const CAMPAIGN = {
   endDate: '2026.10.31',
   /** 券最低消費門檻，250／500 皆同 */
   minSpend: 300,
-  /** 每人可累積的點數上限（＝等級三門檻）；封頂後再打卡不加點，每人可兌換價值因此固定 */
-  quota: 1000,
+  /**
+   * 點數不設上限：客戶規則要求「持續累積、不歸零」，且每 1,000 點換一次抽獎資格，
+   * 有上限第二次就永遠拿不到。預算改由獎項的 stock 控管。
+   * 每累積這麼多點，取得一次抽獎資格。
+   */
+  lotteryUnit: 1000,
   /** 註冊禮點數（＝等級一門檻，註冊即為啟程會員） */
   signupBonus: 200,
   /** 兌換後的券有效天數 */
@@ -311,16 +442,34 @@ export function useCampaign() {
   }))
 
   /**
-   * 示範初始狀態：註冊禮 200 ＋ 北港朝天宮 100 ＋ 北港女兒橋 100 ＋ 虎尾糖廠 200 ＝ 600 點（等級二），
-   * 已兌換一張 250 元券，所以可用點數是 350 —— 幾個數字彼此對得起來。
+   * 示範初始狀態：
+   *   註冊禮 200 ＋ 打卡 3 站（100＋100＋200）＝ 600
+   *   ＋ 食農體驗 2 個（300×2）＝ 1,200
+   *   ＋ 租車 1 次 → 自駕新手 300、雲林借還車 300 ＝ 1,800 點（等級三、1 次抽獎資格）
+   * 已兌換一張 250 元券，所以可用點數 1,550。
    */
   const checkedIn = useState<string[]>('checkedIn', () => ['r1', 'g8', 'r3'])
 
-  /** 已兌換的優惠券 */
+  /** 已完成的指定任務（靠憑證完成的那種；里程碑是算出來的，不存在這裡） */
+  const doneTaskIds = useState<string[]>('doneTaskIds', () => ['fa1', 'fa2'])
+
+  /** 租車紀錄。里程碑與情境任務都由這份推導 */
+  const rentals = useState<Rental[]>('rentals', () => [
+    { code: 'IR-2609-8842', inYunlin: true, electric: false, at: '2026.09.14' }
+  ])
+
+  /** 用過的憑證，避免同一張重複送 */
+  const usedCodes = useState<string[]>('usedCodes', () => ['FA-TILAPIA-01', 'FA-CLAM-02', 'IR-2609-8842'])
+
+  /** 已兌換的券 */
   const coupons = useState<Coupon[]>('coupons', () => [
     {
       id: 'c1',
+      rewardId: 'coupon-250',
+      name: '250 元優惠券',
       value: 250,
+      cost: 250,
+      channel: 'store',
       status: 'unused',
       code: 'YL26-250-8FK2',
       issuedAt: '2026.09.12',
@@ -332,19 +481,40 @@ export function useCampaign() {
 
   const spotById = (id: string) => ALL_SPOTS.find((s) => s.id === id)
 
-  /**
-   * 累積獲得的點數：註冊禮 ＋ 已完成任務的點數，封頂在 CAMPAIGN.quota。
-   * 兌換不會讓它減少，所以等級只升不降。
-   */
-  const earnedPoints = computed(() =>
-    Math.min(
-      CAMPAIGN.quota,
-      CAMPAIGN.signupBonus + checkedIn.value.reduce((s, id) => s + (spotById(id)?.points ?? 0), 0)
-    )
+  /** 已完成的食農體驗數（不含里程碑本身），里程碑讀這個 */
+  const foodagriCount = computed(
+    () => tasksOfKind('foodagri').filter((t) => !t.milestone && doneTaskIds.value.includes(t.id)).length
   )
 
-  /** 點數已封頂：之後打卡只蓋章、不再加點 */
-  const atCap = computed(() => earnedPoints.value >= CAMPAIGN.quota)
+  /** 租車次數，里程碑讀這個 */
+  const rentalCount = computed(() => rentals.value.length)
+
+  /** 任務完成與否：打卡看站點、里程碑看計數器、情境看租車紀錄、其餘看憑證 */
+  function isTaskDone(t: Task): boolean {
+    if (t.kind === 'checkin') return isCheckedIn(t.spotId!)
+    if (t.milestone) {
+      const n = t.milestone.counter === 'irent' ? rentalCount.value : foodagriCount.value
+      return n >= t.milestone.need
+    }
+    if (t.rentalFlag) return rentals.value.some((r) => r[t.rentalFlag!])
+    return doneTaskIds.value.includes(t.id)
+  }
+
+  const completedTasks = computed(() => TASKS.filter(isTaskDone))
+
+  /** 某一類任務的完成數與總數，任務牆的分頁標籤用 */
+  const kindProgress = (k: TaskKind) => {
+    const list = tasksOfKind(k)
+    return { done: list.filter(isTaskDone).length, total: list.length }
+  }
+
+  /**
+   * 累積獲得的點數：註冊禮 ＋ 所有已完成任務。
+   * 不設上限（客戶規則：持續累積、不歸零），兌換也不會讓它減少，所以等級只升不降。
+   */
+  const earnedPoints = computed(
+    () => CAMPAIGN.signupBonus + completedTasks.value.reduce((s, t) => s + t.points, 0)
+  )
 
   /** 目前等級：已達門檻的最高一級 */
   const level = computed<1 | 2 | 3>(
@@ -353,8 +523,8 @@ export function useCampaign() {
 
   const levelInfo = computed(() => LEVELS[level.value - 1]!)
 
-  /** 已兌換掉的點數；每張券都來自兌換，面額即扣點數 */
-  const spentPoints = computed(() => coupons.value.reduce((s, c) => s + c.value, 0))
+  /** 已兌換掉的點數（兌換時的花費，與面額不一定相同） */
+  const spentPoints = computed(() => coupons.value.reduce((s, c) => s + c.cost, 0))
 
   /** 可用點數 */
   const points = computed(() => earnedPoints.value - spentPoints.value)
@@ -373,7 +543,7 @@ export function useCampaign() {
     return (earnedPoints.value - from) / (nextLevel.value.threshold - from)
   })
 
-  /** 未使用的券的面額合計 */
+  /** 未使用的店家折抵券面額合計；借問站好禮沒有面額，不列入 */
   const walletAmount = computed(() =>
     coupons.value.filter((c) => c.status === 'unused').reduce((s, c) => s + c.value, 0)
   )
@@ -384,17 +554,38 @@ export function useCampaign() {
     return { done: ids.filter((id) => isCheckedIn(id)).length, total: ids.length }
   }
 
+  /** 走完整條的路線數，抽獎加碼用 */
+  const completedRoutes = computed(
+    () => ROUTES.filter((r) => routeProgress(r).done === routeProgress(r).total).length
+  )
+
   /**
-   * 能不能兌換某個品項。等級不足優先回報 —— 等級是長期目標，
-   * 點數不足則是「差多少」，兩者給使用者的行動建議不同。
+   * 抽獎資格：每累積 lotteryUnit 點 ＋1 次，每走完一條推薦路線再 ＋1 次。
+   * 用累積點數而非可用點數 —— 兌換不該影響抽獎資格。
+   */
+  const draws = computed(() => ({
+    fromPoints: Math.floor(earnedPoints.value / CAMPAIGN.lotteryUnit),
+    fromRoutes: completedRoutes.value,
+    get total() { return this.fromPoints + this.fromRoutes },
+    /** 距離下一次純點數資格還差幾點 */
+    toNext: CAMPAIGN.lotteryUnit - (earnedPoints.value % CAMPAIGN.lotteryUnit)
+  }))
+
+  const hasRedeemed = (rewardId: string) => coupons.value.some((c) => c.rewardId === rewardId)
+
+  /**
+   * 能不能兌換某個品項。順序照「使用者能不能自己解決」排：
+   * 已兌完與已兌換過是死路，等級不足要長期經營，點數不足只差一點努力。
    */
   function canRedeem(r: Reward): { ok: true } | { ok: false; reason: string } {
+    if (isSoldOut(r)) return { ok: false, reason: '已兌完' }
+    if (r.oncePerMember && hasRedeemed(r.id)) return { ok: false, reason: '已兌換過' }
     if (level.value < r.minLevel) return { ok: false, reason: `${LEVELS[r.minLevel - 1]!.name}以上可兌換` }
     if (points.value < r.cost) return { ok: false, reason: `還差 ${r.cost - points.value} 點` }
     return { ok: true }
   }
 
-  /** 兌換：扣點（即新增一張等值券），不影響等級 */
+  /** 兌換：扣點並產生一張券，不影響等級與抽獎資格 */
   function redeem(rewardId: string): Coupon | null {
     const r = REWARDS.find((x) => x.id === rewardId)
     if (!r || !canRedeem(r).ok) return null
@@ -402,34 +593,83 @@ export function useCampaign() {
     const expires = new Date(now.getTime() + CAMPAIGN.couponValidDays * 86400000)
     const coupon: Coupon = {
       id: `c${coupons.value.length + 1}`,
-      value: r.cost,
+      rewardId: r.id,
+      name: r.name,
+      value: r.value,
+      cost: r.cost,
+      channel: r.channel,
       status: 'unused',
       code: `YL26-${r.cost}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
       issuedAt: fmtDate(now),
       expiresAt: fmtDate(expires)
     }
     coupons.value.push(coupon)
+    r.claimed += 1
     return coupon
+  }
+
+  /** 完成任務後的共同結果：加了幾點、是否升級、順帶解鎖了哪些里程碑 */
+  interface TaskResult {
+    gained: number
+    levelUp: Level | null
+    unlocked: Task[]
+  }
+  function withTaskResult(fn: () => void): TaskResult {
+    const beforePts = earnedPoints.value
+    const beforeLv = level.value
+    const beforeDone = new Set(completedTasks.value.map((t) => t.id))
+    fn()
+    return {
+      gained: earnedPoints.value - beforePts,
+      levelUp: level.value > beforeLv ? levelInfo.value : null,
+      unlocked: completedTasks.value.filter((t) => !beforeDone.has(t.id) && !!t.milestone)
+    }
   }
 
   /**
    * 打卡：擷取經緯度 + 綁定會員 + 去重。
-   * 回傳這次實際加了幾點（封頂時會少於站點點數，甚至為 0），以及是否剛好跨過升級門檻。
    * 單一任務最多 500 點，不可能一次跨兩級。
    */
-  function checkIn(id: string): { gained: number; levelUp: Level | null } {
-    const beforePts = earnedPoints.value
-    const beforeLv = level.value
-    if (!checkedIn.value.includes(id)) checkedIn.value.push(id)
-    return {
-      gained: earnedPoints.value - beforePts,
-      levelUp: level.value > beforeLv ? levelInfo.value : null
-    }
+  function checkIn(id: string): TaskResult {
+    return withTaskResult(() => {
+      if (!checkedIn.value.includes(id)) checkedIn.value.push(id)
+    })
   }
 
-  /** 回到剛註冊完的狀態：等級一、註冊禮 200 點、沒有章也沒有券 */
+  /** 指定任務：輸入現場給的活動代碼。同一組代碼不能重複使用 */
+  function submitTaskCode(taskId: string, code: string): TaskResult | { error: string } {
+    const t = taskById(taskId)
+    const key = code.trim().toUpperCase()
+    if (!t || !t.codeLabel) return { error: '這個任務不是用代碼完成的' }
+    if (key.length < 4) return { error: '代碼格式不正確' }
+    if (usedCodes.value.includes(key)) return { error: '這組代碼已經使用過了' }
+    if (isTaskDone(t)) return { error: '這個任務已經完成過了' }
+    return withTaskResult(() => {
+      usedCodes.value.push(key)
+      doneTaskIds.value.push(t.id)
+    })
+  }
+
+  /**
+   * 登錄一筆租車紀錄。iRent 的 5 個任務全部由這份紀錄推導：
+   * 次數推里程碑，取還車地點與車種推情境任務。
+   */
+  function logRental(input: { code: string; inYunlin: boolean; electric: boolean }): TaskResult | { error: string } {
+    const key = input.code.trim().toUpperCase()
+    if (key.length < 4) return { error: '訂單編號格式不正確' }
+    if (usedCodes.value.includes(key)) return { error: '這筆訂單已經登錄過了' }
+    return withTaskResult(() => {
+      usedCodes.value.push(key)
+      rentals.value.push({ ...input, code: key, at: fmtDate(new Date()) })
+    })
+  }
+
+  /** 回到剛註冊完的狀態：等級一、註冊禮 200 點，沒有任何任務紀錄 */
   function resetDemo() {
     checkedIn.value = []
+    doneTaskIds.value = []
+    rentals.value = []
+    usedCodes.value = []
     coupons.value = []
   }
 
@@ -447,22 +687,33 @@ export function useCampaign() {
     logout,
     member,
     checkedIn,
+    doneTaskIds,
+    rentals,
     coupons,
     level,
     levelInfo,
     levelProgress,
     earnedPoints,
-    atCap,
     spentPoints,
     points,
     nextLevel,
+    draws,
     walletAmount,
     isCheckedIn,
+    isTaskDone,
+    completedTasks,
+    kindProgress,
+    foodagriCount,
+    rentalCount,
     routeProgress,
+    completedRoutes,
     spotById,
+    hasRedeemed,
     canRedeem,
     redeem,
     checkIn,
+    submitTaskCode,
+    logRental,
     resetDemo
   }
 }

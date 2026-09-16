@@ -31,6 +31,7 @@ export const FUNNEL = [
   { label: '加 LINE 好友', value: 24860 },
   { label: '完成會員註冊', value: 18420 },
   { label: '首次站點打卡', value: 14205 },
+  { label: '完成指定任務', value: 9260 },
   { label: '升級探索會員', value: 11380 },
   { label: '升級達成會員', value: 6240 },
   { label: '實際使用優惠券', value: 5180 }
@@ -81,17 +82,19 @@ export interface MemberRow {
   earned: number
   /** 已兌換成優惠券的點數（250／500 的組合） */
   spent: number
+  /** 抽獎次數＝累積點數 ÷ 1,000 ＋ 完成的推薦路線數 */
+  draws: number
   /** 一人一帳號控管：信箱／身分證去重命中 */
   dupFlag: boolean
 }
 
 export const MEMBERS: MemberRow[] = [
-  { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 750, dupFlag: false },
-  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', level: 2, earned: 700, spent: 500, dupFlag: false },
-  { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', level: 3, earned: 1000, spent: 1000, dupFlag: false },
-  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', level: 1, earned: 300, spent: 0, dupFlag: true },
-  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', level: 1, earned: 200, spent: 0, dupFlag: false },
-  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', level: 2, earned: 600, spent: 250, dupFlag: false }
+  { id: 'm1', name: '王＊雲', email: 'w***yun@gmail.com', identity: 'visitor', level: 3, earned: 2400, spent: 750, draws: 2, dupFlag: false },
+  { id: 'm2', name: '陳＊華', email: 'c***hua@yahoo.com.tw', identity: 'local', level: 2, earned: 700, spent: 500, draws: 0, dupFlag: false },
+  { id: 'm3', name: '林＊文', email: 'l***wen@gmail.com', identity: 'visitor', level: 3, earned: 3600, spent: 1000, draws: 4, dupFlag: false },
+  { id: 'm4', name: '黃＊婷', email: 'h***ting@hotmail.com', identity: 'visitor', level: 1, earned: 300, spent: 0, draws: 0, dupFlag: true },
+  { id: 'm5', name: '張＊豪', email: 'c***hao@gmail.com', identity: 'local', level: 1, earned: 200, spent: 0, draws: 0, dupFlag: false },
+  { id: 'm6', name: '李＊芳', email: 'l***fang@msn.com', identity: 'visitor', level: 2, earned: 900, spent: 250, draws: 0, dupFlag: false }
 ]
 
 export function useAdmin() {
