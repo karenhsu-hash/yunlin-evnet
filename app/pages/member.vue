@@ -439,9 +439,7 @@ const tiltOf = (id: string) =>
               </div>
 
               <p class="mt-4 rounded-2xl bg-paper-soft px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
-                折抵券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用、不找零，限雲林合作店家；
-                限量好禮請至 {{ STATIONS.length }} 處借問站出示兌換券領取。
-                兩者皆於兌換後 {{ CAMPAIGN.couponValidDays }} 天內有效。
+                折抵券消費滿 {{ CAMPAIGN.minSpend }} 元即可使用、不找零，限雲林合作店家；限量好禮請至 {{ STATIONS.length }} 處借問站出示兌換券領取。兩者皆於兌換後 {{ CAMPAIGN.couponValidDays }} 天內有效。
               </p>
             </div>
           </div>

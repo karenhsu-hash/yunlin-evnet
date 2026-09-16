@@ -32,8 +32,7 @@ const towns = computed(() => [...new Set(stores.map((s) => s.town))])
         </span>
         <h1 class="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">合作店家</h1>
         <p class="mt-2 max-w-xl text-sm text-ink-soft sm:text-base">
-          全縣約 {{ CAMPAIGN.storeCount }} 家店，遍及 {{ towns.length }} 個鄉鎮市。
-          帶著優惠券，吃一碗麵、買一罐醬油、喝一杯山上的咖啡。
+          全縣約 {{ CAMPAIGN.storeCount }} 家店，遍及 {{ towns.length }} 個鄉鎮市。帶著優惠券，吃一碗麵、買一罐醬油、喝一杯山上的咖啡。
         </p>
       </div>
     </section>

@@ -154,6 +154,10 @@
   }
 
   button, a { touch-action: manipulation; }
+
+  /* 中文排版：段落避免行尾落單字，標題各行長度平衡 */
+  p, li, dd, figcaption { text-wrap: pretty; }
+  h1, h2, h3, h4 { text-wrap: balance; }
 }
 
 @layer components {

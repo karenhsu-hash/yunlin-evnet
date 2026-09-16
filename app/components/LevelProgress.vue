@@ -81,8 +81,7 @@ const { level, earnedPoints, points, nextLevel, levelProgress, draws } = useCamp
           />
         </div>
         <p class="mt-1.5 text-[11px] text-ink-faint">
-          點數持續累積不歸零；目前已取得 {{ draws.total }} 次抽獎資格，
-          再 {{ toComma(draws.toNext) }} 點可再得一次。
+          點數持續累積不歸零；目前已取得 {{ draws.total }} 次抽獎資格，再 {{ toComma(draws.toNext) }} 點可再得一次。
         </p>
       </div>
 

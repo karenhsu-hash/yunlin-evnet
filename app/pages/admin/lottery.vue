@@ -12,7 +12,7 @@ const week = computed(() => LOTTERY_WEEKS.find((w) => w.id === weekId.value)!)
 
 /**
  * 資格條件：最低抽獎次數。
- * 次數＝累積點數 ÷ 1,000 ＋ 完成的推薦路線數，算法在 useCampaign 的 draws。
+ * 次數：累積點數每滿 1,000 點加一次，再加上完成的推薦路線數，算法在 useCampaign 的 draws。
  */
 const minDraws = ref(1)
 const DRAW_OPTIONS = [1, 2, 3]
@@ -136,8 +136,7 @@ const physicalCount = computed(
         <!-- 資格算法說明 -->
         <div class="mt-3 rounded-2xl bg-sky-50 px-3 py-2.5">
           <p class="text-[11px] leading-relaxed text-sky-700">
-            抽獎次數 ＝ 累積總點數 ÷ {{ toComma(CAMPAIGN.lotteryUnit) }} ＋ 完成的推薦路線數。
-            兌換優惠所扣除的點數不影響已取得的次數。
+            抽獎次數為累積總點數每滿 {{ toComma(CAMPAIGN.lotteryUnit) }} 點加一次，再加上完成的推薦路線數。兌換優惠所扣除的點數不影響已取得的次數。
           </p>
         </div>
 
@@ -227,8 +226,7 @@ const physicalCount = computed(
         </div>
 
         <p class="mt-3 rounded-2xl bg-marigold-50 px-3 py-2.5 text-[11px] leading-relaxed text-marigold-700">
-          名單僅供人工開獎與寄送作業使用。系統不含自動開獎、獎品庫存管理與自動通知；
-          地址為會員註冊時填寫，寄送前請人工複核。
+          名單僅供人工開獎與寄送作業使用。系統不含自動開獎、獎品庫存管理與自動通知；地址為會員註冊時填寫，寄送前請人工複核。
         </p>
       </div>
     </section>

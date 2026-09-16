@@ -82,7 +82,7 @@ export interface MemberRow {
   earned: number
   /** 已兌換成優惠券的點數（250／500 的組合） */
   spent: number
-  /** 抽獎次數＝累積點數 ÷ 1,000 ＋ 完成的推薦路線數 */
+  /** 抽獎次數：累積點數每滿 1,000 點加一次，再加上完成的推薦路線數 */
   draws: number
   /** 一人一帳號控管：信箱／身分證去重命中 */
   dupFlag: boolean

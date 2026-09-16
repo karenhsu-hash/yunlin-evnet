@@ -250,8 +250,7 @@ const busy = computed(() => phase.value === 'locating')
                 離你最近的是<b>{{ geo.nearest }}</b>，距離 <b>{{ readableDistance(geo.distance!) }}</b>。
               </template>
               <template v-else>
-                你距離 <b>{{ target?.name }}</b> 還有 <b>{{ readableDistance(geo.distance!) }}</b>，
-                需進入 {{ targetRadius }} 公尺內才能蓋章。
+                你距離 <b>{{ target?.name }}</b> 還有 <b>{{ readableDistance(geo.distance!) }}</b>，需進入 {{ targetRadius }} 公尺內才能蓋章。
               </template>
               <template v-if="geo.accuracy"><br>本次定位誤差約 {{ Math.round(geo.accuracy) }} 公尺。</template>
             </p>

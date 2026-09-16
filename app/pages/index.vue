@@ -137,7 +137,7 @@ const faqItems = [
           <UIcon name="i-lucide-calendar-days" class="size-3.5" />
           {{ CAMPAIGN.startDate }} – {{ CAMPAIGN.endDate }}
         </span>
-        <span class="chip bg-indigoink-500 text-white">與 {{ CAMPAIGN.partner }} 一起出發</span>
+        <span class="chip bg-indigoink-500 text-white">與{{ CAMPAIGN.partner }}一起出發</span>
       </div>
 
       <h1 class="mt-4 text-3xl font-black leading-tight text-ink sm:text-4xl lg:text-5xl">
@@ -145,8 +145,7 @@ const faqItems = [
       </h1>
 
       <p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base">
-        走訪雲林各地亮點，完成觀光護照任務，
-        <b class="text-vermilion-600">沿途集章解鎖優惠</b>，在合作店家直接兌換。
+        走訪雲林各地亮點，完成觀光護照任務，<b class="text-vermilion-600">沿途集章解鎖優惠</b>，在合作店家直接兌換。
       </p>
 
       <!-- 手機版行動點 -->
@@ -179,8 +178,7 @@ const faqItems = [
             </span>
             <h2 class="mt-3 text-xl font-black sm:text-2xl">加入會員，開啟你的觀光護照</h2>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-              註冊成為會員，即可獲得 {{ CAMPAIGN.signupBonus }} 點並開啟觀光護照。
-              完成越多任務、累積越多點數，就能逐步升級並解鎖更多優惠。
+              註冊成為會員，即可獲得 {{ CAMPAIGN.signupBonus }} 點並開啟觀光護照。完成越多任務、累積越多點數，就能逐步升級並解鎖更多優惠。
             </p>
 
             <!-- 護照的三個等級門檻：一眼看懂點數怎麼長上去，完整規則在下方「觀光護照玩法」 -->
@@ -287,8 +285,7 @@ const faqItems = [
     <section class="container-page pt-12 sm:pt-16">
       <SectionHead title="觀光護照玩法" />
       <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-soft sm:text-base">
-        依序完成觀光護照任務，即可獲得點數。每個任務依難度不同，可獲得 100～500 點。
-        累積點數達到指定門檻後，會員等級會自動提升，並可兌換該等級對應的專屬優惠。
+        依序完成觀光護照任務，即可獲得點數。每個任務依難度不同，可獲得 100～500 點。累積點數達到指定門檻後，會員等級會自動提升，並可兌換該等級對應的專屬優惠。
       </p>
 
       <!-- 客戶的表只有兩欄，手機也放得下，不必另做卡片版 -->

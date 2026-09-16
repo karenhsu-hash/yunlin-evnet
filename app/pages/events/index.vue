@@ -280,9 +280,7 @@ watch(activeRouteId, () => {
         <h2 class="border-b-2 border-ink pb-2.5 text-xl font-black text-ink sm:text-2xl">玩法說明</h2>
 
         <p class="mt-5 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
-          本活動規劃 {{ ROUTES.length }} 條推薦路線，把雲林 {{ ALL_SPOTS.length }} 個打卡任務串成可以照著走的行程。
-          每一站就是一個觀光護照任務，於站點現場以定位確認抵達即可獲得點數；
-          走完整條路線另可取得一次抽獎資格。
+          本活動規劃 {{ ROUTES.length }} 條推薦路線，把雲林 {{ ALL_SPOTS.length }} 個打卡任務串成可以照著走的行程。每一站就是一個觀光護照任務，於站點現場以定位確認抵達即可獲得點數；走完整條路線另可取得一次抽獎資格。
         </p>
 
         <ol class="mt-6 space-y-4">

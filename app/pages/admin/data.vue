@@ -202,9 +202,7 @@ function exportStores() {
         </div>
 
         <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
-          共 {{ TASKS.length }} 個任務，總點數 {{ toComma(TASKS.reduce((s, t) => s + t.points, 0)) }} 點。
-          一般任務每人限完成一次；租車與食農教育的里程碑以累積次數自動認定，
-          同一筆訂單或同一組活動代碼僅計算一次。任務內容與點數目前為示意值，待主辦提供正式清單。
+          共 {{ TASKS.length }} 個任務，總點數 {{ toComma(TASKS.reduce((s, t) => s + t.points, 0)) }} 點。一般任務每人限完成一次；租車與食農教育的里程碑以累積次數自動認定，同一筆訂單或同一組活動代碼僅計算一次。任務內容與點數目前為示意值，待主辦提供正式清單。
         </p>
       </div>
     </section>
@@ -258,9 +256,7 @@ function exportStores() {
         </div>
 
         <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
-          共 {{ ALL_SPOTS.length }} 個站點，一律以定位打卡，不設置實體 QR code。
-          打卡時擷取經緯度與站點座標比對，於判定半徑內即記入，並綁定會員身分去重。
-          面狀場域（步道、濕地、農業區）的半徑另行放大。
+          共 {{ ALL_SPOTS.length }} 個站點，一律以定位打卡，不設置實體 QR code。打卡時擷取經緯度與站點座標比對，於判定半徑內即記入，並綁定會員身分去重。面狀場域（步道、濕地、農業區）的半徑另行放大。
         </p>
       </div>
     </section>

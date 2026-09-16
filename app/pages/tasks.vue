@@ -68,8 +68,7 @@ function submit() {
       </span>
       <h1 class="mt-2 text-3xl font-black leading-tight sm:text-4xl">完成任務，累積點數</h1>
       <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base">
-        共 {{ TASKS.length }} 個任務，每個任務依難度可得 100～500 點。
-        點數持續累積不歸零，用來升級會員等級、兌換優惠與取得抽獎資格。
+        共 {{ TASKS.length }} 個任務，每個任務依難度可得 100～500 點。點數持續累積不歸零，用來升級會員等級、兌換優惠與取得抽獎資格。
       </p>
       <p v-if="isLoggedIn" class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-marigold-50 px-3.5 py-2">
         <UIcon name="i-lucide-coins" class="size-4 text-marigold-700" />

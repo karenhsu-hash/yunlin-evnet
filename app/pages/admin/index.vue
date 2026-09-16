@@ -171,8 +171,7 @@ const flaggedStores = computed(() => STORES.filter((s) => s.flagged))
       <div class="card p-4">
         <h2 class="font-black">抽獎統計</h2>
         <p class="mt-0.5 text-xs text-ink-soft">
-          資格＝累積點數 ÷ {{ toComma(CAMPAIGN.lotteryUnit) }} ＋ 完成的推薦路線數；
-          開獎與寄送為人工作業
+          資格為累積點數每滿 {{ toComma(CAMPAIGN.lotteryUnit) }} 點加一次，再加上完成的推薦路線數；開獎與寄送為人工作業
         </p>
         <div class="mt-3 grid grid-cols-3 gap-2.5">
           <div v-for="w in LOTTERY_WEEKS" :key="w.id" class="rounded-2xl bg-paper-soft px-3 py-2.5">

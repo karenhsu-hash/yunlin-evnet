@@ -234,8 +234,7 @@ const GA = [
           </dl>
 
           <p class="mt-3 rounded-2xl bg-paper-soft px-3 py-2.5 text-[11px] leading-relaxed text-ink-soft">
-            券不找零、最低消費 {{ CAMPAIGN.minSpend }} 元的設計，使每張券都必然帶出額外自付消費，
-            是槓桿倍數的主要來源。
+            券不找零、最低消費 {{ CAMPAIGN.minSpend }} 元的設計，使每張券都必然帶出額外自付消費，是槓桿倍數的主要來源。
           </p>
         </div>
       </div>

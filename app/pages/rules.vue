@@ -223,8 +223,7 @@ onMounted(() => {
           {{ CAMPAIGN.county }}{{ CAMPAIGN.title }}活動辦法
         </h1>
         <p class="mt-2 text-sm text-ink-soft">
-          活動期間 {{ CAMPAIGN.startDate }} – {{ CAMPAIGN.endDate }}　｜
-          主辦：{{ CAMPAIGN.county }}政府　｜　合作：{{ CAMPAIGN.partner }}
+          活動期間 {{ CAMPAIGN.startDate }} – {{ CAMPAIGN.endDate }}　｜主辦：{{ CAMPAIGN.county }}政府　｜　合作：{{ CAMPAIGN.partner }}
         </p>
       </div>
     </section>
